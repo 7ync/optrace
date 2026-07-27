@@ -60,25 +60,29 @@ class Test_matmul:
         with pytest.raises(ValueError):
             trace.validate_matrix(self.A9)
 
-    def test_C_size(self):
+    def test_C(self):
         trace.calculate(self.A1, self.B1, "matmul")
         assert len(trace.C()) == 4 # type: ignore
         assert len(trace.C()[0]) == 7 # type: ignore
+        assert trace.C() == [[17,40,53,50,32,35,53], 
+                             [22,53,71,65,42,48,73], 
+                             [17,54,72,70,47,49,53], 
+                             [16,50,67,64,43,46,52]]
 
         trace.calculate(self.A2, self.B2, "matmul")
         assert len(trace.C()) == 3 # type: ignore
         assert len(trace.C()[0]) == 2 # type: ignore
+        assert trace.C() == [[107,386], [124,91], [112,71]]
 
         trace.calculate(self.A3, self.B3, "matmul")
         assert len(trace.C()) == 2 # type: ignore
         assert len(trace.C()[0]) == 2 # type: ignore
+        assert trace.C() == [[8,18], [30,50]]
 
         trace.calculate(self.A4, self.B4, "matmul")
         assert len(trace.C()) == 1 # type: ignore
         assert len(trace.C()) == 1 # type: ignore
-
-    def test_result(self):
-        ...
+        assert trace.C() == [[8]]
 
     def test_trace_count(self):
         ...
