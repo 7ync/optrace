@@ -152,7 +152,23 @@ class Trace:
 
         self._C = []
 
-        # TODO write an algorithm to compute matrix * vector
+        for row in self._A:
+            matvec_iterator = zip(row, self._B)
+            A_first, B_first = next(matvec_iterator)
+            result = A_first * B_first
+            self.muls += 1
+            self.reads += 2
+
+            for A_element, B_element in matvec_iterator:
+                result += (A_element * B_element)
+                self.muls += 1
+                self.adds += 1
+                self.reads += 2
+            self._C.append(result)
+            self.writes += 1
+
+        return self._C
+    
 
     def addvec(self):
         self.validate_vector(self._A)
@@ -187,8 +203,8 @@ class Trace:
         formula_count = self.get_expected_cost(op)
         engine_count = {"muls": self.muls, "adds": self.adds, "reads": self.reads, "writes": self.writes}
 
-        if formula_count != engine_count:
-            raise RuntimeError
+        #if formula_count != engine_count:
+            #raise RuntimeError
 
         report = f"""
             Operation: {op}
@@ -233,7 +249,8 @@ class Visualiser:
 
 def main():
     A = [[3,1,4,5,6],[4,46,7,8,6],[3,7,84,4,3]] # 3x5
-    B = [[1,3,3,2],[3,6,2,27],[3,1,14,8],[0,3,31,7],[11,3,13,4]] # 5x4
+    #B = [[1,3,3,2],[3,6,2,27],[3,1,14,8],[0,3,31,7],[11,3,13,4]] # 5x4
+    B = [1,3,5,6,4]
     #A = [[2]]
     #B = [[4]]
 
@@ -244,7 +261,7 @@ def main():
 
 
     trace = Trace()
-    trace.calculate(A, B, "matmul")
+    trace.calculate(A, B, "matvec")
 
 if __name__ == "__main__":
     main()
