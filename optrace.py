@@ -32,7 +32,7 @@ class Trace:
         else:
             for step in self._ops[self.op]():
                     pass
-            return self.cost(self.op)
+            return self.report(self.op)
 
     def matmul(self):
 
@@ -130,12 +130,12 @@ class Trace:
             
             # check all rows are the same length
             if len(matrix[row]) != row_size:
-                raise ValueError("rows must be the same size [A]")
+                raise ValueError("rows must be the same size")
             
             for column in range(len(matrix[row])):
                 # check all elements are integers or floats
                 if not isinstance(matrix[row][column], (float, int)):
-                    raise ValueError("invalid value in matrix A")
+                    raise ValueError("invalid value in matrix")
 
     def validate_vector(self, vector):
         ...
@@ -182,9 +182,9 @@ class Trace:
 
         # TODO add yield statements
 
-    def cost(self, op):
+    def report(self, op):
 
-        formula_count = self.return_formula_count(op)
+        formula_count = self.get_expected_cost(op)
         engine_count = {"muls": self.muls, "adds": self.adds, "reads": self.reads, "writes": self.writes}
 
         if formula_count != engine_count:
@@ -192,8 +192,11 @@ class Trace:
 
         report = f"""
             Operation: {op}
-            Total Multiplications: {engine_count["muls"]}
-        
+            Multiplications: {engine_count["muls"]}
+            Additions: {engine_count["adds"]}
+            Operand Reads: {engine_count["reads"]}
+            Output Writes: {engine_count["writes"]}
+
         """
 
         print(report)
@@ -204,7 +207,7 @@ class Trace:
         # TODO implement full report for each operation
 
 
-    def return_formula_count(self, op):
+    def get_expected_cost(self, op):
 
         match op:
             case "matmul":
@@ -212,6 +215,9 @@ class Trace:
                 n = len(self._A[0])
                 p = len(self._B[0])
                 return {"muls": m*n*p, "adds": m*p*(n-1), "reads":2*m*n*p, "writes": m*p}
+
+
+        return {}
 
         # TODO express matvec, addvec and dot cost formulas
 
@@ -233,6 +239,8 @@ def main():
 
     #A = [1,3,4]
     #B = [2,4,5]
+
+    
 
 
     trace = Trace()
