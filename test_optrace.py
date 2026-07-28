@@ -16,6 +16,7 @@ class Test_matmul:
     A9 = [[4,1,3],[3,4,"1"]] # invalid
     A10 = [[3,3,1],[1,4],[4,4]] # unequal rows
     A11 = [[1,3],[1,5,5],[1,4,1]] # unequal rows
+    A12 = [[4,9,True, 0],[0,2,4,5]]
 
 
     B1 = [[1,4,5,6,4,3,1],[3,5,6,7,4,3,6],[1,4,6,4,3,5,7]] # 3x7
@@ -65,6 +66,8 @@ class Test_matmul:
             trace.validate_matrix(self.A8)
         with pytest.raises(ValueError):
             trace.validate_matrix(self.A9)
+        with pytest.raises(ValueError):
+            trace.validate_matrix(self.A12)
 
     def test_calculation(self):
         trace.calculate(self.A1, self.B1, "matmul")

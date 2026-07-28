@@ -123,18 +123,18 @@ class Trace:
 
         row_size = len(matrix[0])
 
-        for row in range(len(matrix)):
+        for row in matrix:
             # check all rows are lists
-            if not isinstance(matrix[row], list):
+            if not isinstance(row, list):
                 raise ValueError("invalid list in matrix")
             
             # check all rows are the same length
-            if len(matrix[row]) != row_size:
+            if len(row) != row_size:
                 raise ValueError("rows must be the same size")
             
-            for column in range(len(matrix[row])):
+            for element in row:
                 # check all elements are integers or floats
-                if not isinstance(matrix[row][column], (float, int)):
+                if isinstance(element, bool) or not isinstance(element, (float, int)):
                     raise ValueError("invalid value in matrix")
 
     def validate_vector(self, vector):
