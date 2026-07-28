@@ -39,7 +39,7 @@ class Test_matmul:
         with pytest.raises(ValueError):
             trace.validate_matrix(self.A6)
         with pytest.raises(ValueError):
-                    trace.validate_matrix(self.A7)
+            trace.validate_matrix(self.A7)
 
         trace.validate_matrix(self.A3)
         trace.validate_matrix(self.B2)
@@ -51,6 +51,14 @@ class Test_matmul:
         trace.calculate(self.A2, self.B2, "matmul")
         trace.calculate(self.A3, self.B3, "matmul")
         trace.calculate(self.A4, self.B4, "matmul")
+
+        with pytest.raises(ValueError):
+            trace.calculate(self.A1, self.B2, "matmul")
+        with pytest.raises(ValueError):
+            trace.calculate(self.A2, self.B3, "matmul")
+        with pytest.raises(ValueError):
+            trace.calculate(self.A3, self.B4, "matmul")
+             
 
     def test_valid_elements(self):
         with pytest.raises(ValueError): 
