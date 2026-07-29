@@ -138,8 +138,11 @@ class Trace:
                     raise ValueError("invalid value in matrix")
 
     def validate_vector(self, vector):
-        ...
-        # TODO - write an algorithm to validate vector input
+        if not isinstance(vector, list) or not vector:
+            raise ValueError("invalid vector input")
+        for element in vector:
+            if isinstance(element, bool) or not isinstance(element, (int, float)):
+                raise ValueError("invalid vector value")
 
         
 
@@ -148,7 +151,7 @@ class Trace:
         self.validate_vector(self._B)
 
         if len(self._A[0]) != len(self._B):
-            raise ValueError("length of matrix rows must match vector length")
+            raise ValueError("vector element count must equal matrix column count")
 
         self._C = []
 
@@ -251,6 +254,7 @@ def main():
     A = [[3,1,4,5,6],[4,46,7,8,6],[3,7,84,4,3]] # 3x5
     #B = [[1,3,3,2],[3,6,2,27],[3,1,14,8],[0,3,31,7],[11,3,13,4]] # 5x4
     B = [1,3,5,6,4]
+    #B = [[1]]
     #A = [[2]]
     #B = [[4]]
 
