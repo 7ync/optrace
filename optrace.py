@@ -193,15 +193,43 @@ class Trace:
         self.validate_vector(self._A)
         self.validate_vector(self._B)
 
-        if len(self._A) != len(self._B):
+        A_len = len(self._A)
+        B_len = len(self._B)
+
+        if A_len != B_len:
             raise ValueError("vectors must be the same size")
 
         self._C = []
 
-        for k in range(len(self._A)):
-            self._C.append(self._A[k] + self._B[k])
+        yield {
+            "event": "init",
+            "A_len": A_len,
+            "B_len": B_len,
+            "C_len": A_len,
+        }
 
-        # TODO add yield statements
+        for i, (a, b) in enumerate(zip(self._A, self._B)):
+            result = a + b
+            self.adds += 1
+            self.reads += 2
+
+            yield {
+                "event": "compute",
+                "A_index": i,
+                "B_index": i,
+                "adds": self.adds,
+                "reads": self.reads,
+            }
+
+            self._C.append(result)
+            self.writes += 1
+
+            yield {
+                "event": "write",
+                "C_index": i,
+                "writes": self.writes,
+            }
+
 
     def dot(self):
         self.validate_vector(self._A)
@@ -267,8 +295,9 @@ class Visualiser:
 
 
 def main():
-    A = [[3,1,4,5,6],[4,46,7,8,6],[3,7,84,4,3]] # 3x5
+    #A = [[3,1,4,5,6],[4,46,7,8,6],[3,7,84,4,3]] # 3x5
     #B = [[1,3,3,2],[3,6,2,27],[3,1,14,8],[0,3,31,7],[11,3,13,4]] # 5x4
+    A = [1,3,1,4,1]
     B = [1,3,5,6,4]
     #B = [[1]]
     #A = [[2]]
@@ -281,7 +310,7 @@ def main():
 
 
     trace = Trace()
-    trace.calculate(A, B, "matvec")
+    trace.calculate(A, B, "addvec")
 
 if __name__ == "__main__":
     main()
