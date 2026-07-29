@@ -13,11 +13,10 @@ class Trace:
             "dot": self.dot,
         }
 
-    def calculate(self, A, B, op, visualiser=False):
+    def calculate(self, A, B, op):
         self._A = A
         self._B = B
         self.op = op
-        self.visualiser = visualiser
 
         self._C = 0
 
@@ -26,13 +25,10 @@ class Trace:
         self.reads = 0
         self.writes = 0
 
-        if self.visualiser:
-            return self._ops[self.op]()
+        return self._ops[self.op]()
 
-        else:
-            for step in self._ops[self.op]():
-                    pass
-            return self.report(self.op)
+    # TODO harden generator lifecycle state management
+
 
     def matmul(self):
 
@@ -276,29 +272,25 @@ class Trace:
             "writes": self.writes,
         }
 
-    def report(self, op):
 
-        formula_count = self.get_expected_cost(op)
+    def report(self):
+
+        formula_count = self.get_expected_cost(self.op)
         engine_count = {"muls": self.muls, "adds": self.adds, "reads": self.reads, "writes": self.writes}
 
         if formula_count != engine_count:
            raise RuntimeError
 
         report = f"""
-            Operation: {op}
+            Operation: {self.op}
+            Result: {self._C}
             Multiplications: {engine_count["muls"]}
             Additions: {engine_count["adds"]}
             Operand Reads: {engine_count["reads"]}
             Output Writes: {engine_count["writes"]}
-
         """
 
         print(report)
-
-        print(f"Result: {self._C}")
-        
-
-        # TODO implement full report for each operation
 
 
     def get_expected_cost(self, op):
@@ -350,7 +342,9 @@ def main():
 
 
     trace = Trace()
-    trace.calculate(A, B, "matvec")
+    for step in trace.calculate(A, B, "matvec"):
+        pass
+    trace.report()
 
 if __name__ == "__main__":
     main()
