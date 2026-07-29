@@ -235,15 +235,46 @@ class Trace:
         self.validate_vector(self._A)
         self.validate_vector(self._B)
 
-        if len(self._A) != len(self._B):
+        A_len = len(self._A)
+        B_len = len(self._B)
+
+        if A_len != B_len:
             raise ValueError("vectors must be the same size")
 
         self._C = 0
 
-        for a, b in zip(self._A, self._B):
-            self._C += a * b
+        yield {
+            "event": "init",
+            "A_len": A_len,
+            "B_len": B_len,
+        }
 
-        # TODO add yield statements
+        accumulator = 0
+
+        for i, (a, b) in enumerate(zip(self._A, self._B)):
+            if i == 0:
+                accumulator = a * b
+            else:
+                accumulator += a * b
+                self.adds += 1
+
+            self.muls += 1
+            self.reads += 2
+
+            yield {
+                "event": "compute",
+                "index": i,
+                "muls": self.muls,
+                "reads": self.reads,
+                "adds": self.adds,
+            }
+
+        self._C = accumulator
+        self.writes += 1
+        yield {
+            "event": "write",
+            "writes": self.writes,
+        }
 
     def report(self, op):
 
