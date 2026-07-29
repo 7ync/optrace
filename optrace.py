@@ -39,24 +39,24 @@ class Trace:
         self.validate_matrix(self._A)
         self.validate_matrix(self._B)
 
+        A_rows = len(self._A)
+        A_cols = len(self._A[0])
+        
+        B_rows = len(self._B)
+        B_cols = len(self._B[0])
+
         # check column size for A is equal to the row size for B
-        if len(self._A[0]) != len(self._B):
+        if A_cols != B_rows:
             raise ValueError("invalid size matrix")
 
         self._C = []
 
         for _ in range(len(self._A)):
-            row = [0] * len(self._B[0])
+            row = [0] * B_cols
             self._C.append(row)
 
-        A_rows = len(self._A)
-        A_cols = len(self._A[0])
-
-        B_rows = len(self._B)
-        B_cols = len(self._B[0])
-
-        C_rows = len(self._C)
-        C_cols = len(self._C[0])
+        C_rows = A_rows
+        C_cols = B_cols
 
         yield {
             "event": "init",
@@ -95,7 +95,8 @@ class Trace:
                     
                     yield {
                         "event":"compute", 
-                        "muls": self.muls, 
+                        "muls": self.muls,
+                        "adds": self.adds, 
                         "reads": self.reads,
                         "flops": (self.muls + self.adds),
                         "i": i,
@@ -150,27 +151,65 @@ class Trace:
         self.validate_matrix(self._A)
         self.validate_vector(self._B)
 
-        if len(self._A[0]) != len(self._B):
+        A_rows = len(self._A)
+        A_cols = len(self._A[0])
+        B_elements = len(self._B)
+
+        if A_cols != B_elements:
             raise ValueError("vector element count must equal matrix column count")
 
         self._C = []
 
-        for row in self._A:
+        yield {
+            "event": "init",
+            "A_rows": A_rows,
+            "A_cols": A_cols,
+            "B_elements": B_elements,
+            "C_elements": A_rows,
+        }
+
+        for i, row in enumerate(self._A):
             matvec_iterator = zip(row, self._B)
             A_first, B_first = next(matvec_iterator)
             result = A_first * B_first
             self.muls += 1
             self.reads += 2
 
-            for A_element, B_element in matvec_iterator:
+            yield {
+                "event": "compute",
+                "muls": self.muls,
+                "reads": self.reads,
+                "flops": self.muls + self.adds,
+                "A_row": i,
+                "A_col": 0,
+                "B_element": 0 
+            }
+
+            for col, (A_element, B_element) in enumerate(matvec_iterator):
                 result += (A_element * B_element)
                 self.muls += 1
                 self.adds += 1
                 self.reads += 2
+
+                yield {
+                    "event": "compute",
+                    "muls": self.muls,
+                    "reads": self.reads,
+                    "adds": self.adds,
+                    "flops": self.muls + self.adds,
+                    "A_row": i,
+                    "A_col": col + 1,
+                    "B_element": col + 1,
+                }
+
             self._C.append(result)
             self.writes += 1
 
-        return self._C
+            yield {
+                "event": "write",
+                "writes": self.writes,
+                "C_element": i
+            }
     
 
     def addvec(self):
