@@ -71,26 +71,14 @@ class Trace:
         # compute AB
         for i in range(len(self._A)):
             for j in range(len(self._B[0])):
-                # seed k = 0
-                result = self._A[i][0] * self._B[0][j]
-
-                self.muls += 1
-                self.reads += 2
-
-                yield {
-                    "event":"compute", 
-                    "muls": self.muls, 
-                    "reads": self.reads,
-                    "flops": (self.muls + self.adds),
-                    "i": i,
-                    "j": j,
-                    "k": 0
-                    }
-                
-                for k in range(1, len(self._B)):
-                    result += self._A[i][k] * self._B[k][j]
+                result = 0
+                for k in range(len(self._B)):
+                    if k == 0:
+                        result = self._A[i][k] * self._B[k][j]
+                    else:
+                        result += self._A[i][k] * self._B[k][j]
+                        self.adds += 1
                     self.muls += 1
-                    self.adds += 1
                     self.reads += 2
                     
                     yield {
@@ -170,25 +158,14 @@ class Trace:
 
         for i, row in enumerate(self._A):
             matvec_iterator = zip(row, self._B)
-            A_first, B_first = next(matvec_iterator)
-            result = A_first * B_first
-            self.muls += 1
-            self.reads += 2
-
-            yield {
-                "event": "compute",
-                "muls": self.muls,
-                "reads": self.reads,
-                "flops": self.muls + self.adds,
-                "A_row": i,
-                "A_col": 0,
-                "B_element": 0 
-            }
-
+            result = 0
             for col, (A_element, B_element) in enumerate(matvec_iterator):
-                result += (A_element * B_element)
+                if col == 0:
+                    result = A_element * B_element
+                else:
+                    result += A_element * B_element
+                    self.adds += 1
                 self.muls += 1
-                self.adds += 1
                 self.reads += 2
 
                 yield {
@@ -198,8 +175,8 @@ class Trace:
                     "adds": self.adds,
                     "flops": self.muls + self.adds,
                     "A_row": i,
-                    "A_col": col + 1,
-                    "B_element": col + 1,
+                    "A_col": col,
+                    "B_element": col,
                 }
 
             self._C.append(result)
