@@ -48,17 +48,17 @@ class Test_matmul:
 
 
     def test_valid_AB_size(self):
-        trace.calculate(self.A1, self.B1, "matmul")
-        trace.calculate(self.A2, self.B2, "matmul")
-        trace.calculate(self.A3, self.B3, "matmul")
-        trace.calculate(self.A4, self.B4, "matmul")
+        for _ in trace.calculate(self.A1, self.B1, "matmul"): pass
+        for _ in trace.calculate(self.A2, self.B2, "matmul"): pass
+        for _ in trace.calculate(self.A3, self.B3, "matmul"): pass
+        for _ in trace.calculate(self.A4, self.B4, "matmul"): pass
 
         with pytest.raises(ValueError):
-            trace.calculate(self.A1, self.B2, "matmul")
+            for _ in trace.calculate(self.A1, self.B2, "matmul"): pass
         with pytest.raises(ValueError):
-            trace.calculate(self.A2, self.B3, "matmul")
+            for _ in trace.calculate(self.A2, self.B3, "matmul"): pass
         with pytest.raises(ValueError):
-            trace.calculate(self.A3, self.B4, "matmul")
+            for _ in trace.calculate(self.A3, self.B4, "matmul"): pass
              
 
     def test_valid_elements(self):
@@ -70,7 +70,7 @@ class Test_matmul:
             trace.validate_matrix(self.A12)
 
     def test_calculation(self):
-        trace.calculate(self.A1, self.B1, "matmul")
+        for _ in trace.calculate(self.A1, self.B1, "matmul"): pass
         cost = trace.get_expected_cost("matmul")
         assert len(trace.C()) == 4 # type: ignore
         assert len(trace.C()[0]) == 7 # type: ignore
@@ -81,21 +81,21 @@ class Test_matmul:
         assert cost == {"muls": 84, "adds": 56, "reads": 168, "writes": 28}
         
 
-        trace.calculate(self.A2, self.B2, "matmul")
+        for _ in trace.calculate(self.A2, self.B2, "matmul"): pass
         assert len(trace.C()) == 3 # type: ignore
         assert len(trace.C()[0]) == 2 # type: ignore
         assert trace.C() == [[107,386], [124,91], [112,71]]
         cost = trace.get_expected_cost("matmul")
         assert cost == {"muls": 30, "adds": 24, "reads": 60, "writes": 6}
 
-        trace.calculate(self.A3, self.B3, "matmul")
+        for _ in trace.calculate(self.A3, self.B3, "matmul"): pass
         assert len(trace.C()) == 2 # type: ignore
         assert len(trace.C()[0]) == 2 # type: ignore
         assert trace.C() == [[8,18], [30,50]]
         cost = trace.get_expected_cost("matmul")
         assert cost == {"muls": 8, "adds": 4, "reads": 16, "writes": 4}
 
-        trace.calculate(self.A4, self.B4, "matmul")
+        for _ in trace.calculate(self.A4, self.B4, "matmul"): pass
         assert len(trace.C()) == 1 # type: ignore
         assert len(trace.C()[0]) == 1 # type: ignore
         assert trace.C() == [[8]]
@@ -103,5 +103,6 @@ class Test_matmul:
         assert cost == {"muls": 1, "adds": 0, "reads": 2, "writes": 1}
 
     def test_yield_data(self):
-        ...
+        events = list(trace.calculate(self.A4, self.B4, "matmul"))
+        # TODO
 
