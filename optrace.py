@@ -281,8 +281,8 @@ class Trace:
         formula_count = self.get_expected_cost(op)
         engine_count = {"muls": self.muls, "adds": self.adds, "reads": self.reads, "writes": self.writes}
 
-        #if formula_count != engine_count:
-            #raise RuntimeError
+        if formula_count != engine_count:
+           raise RuntimeError
 
         report = f"""
             Operation: {op}
@@ -309,11 +309,20 @@ class Trace:
                 n = len(self._A[0])
                 p = len(self._B[0])
                 return {"muls": m*n*p, "adds": m*p*(n-1), "reads":2*m*n*p, "writes": m*p}
+            case "matvec":
+                m = len(self._A)
+                n = len(self._B)
+                return {"muls": m*n, "adds": m*(n-1),"reads": 2*(m*n), "writes": m}
+            case "addvec":
+                n = len(self._A)
+                return {"muls": 0, "adds": n, "reads": 2*n, "writes": n}
+            case "dot":
+                n = len(self._A)
+                return {"muls": n, "adds": n-1, "reads": 2*n, "writes": 1}
+
 
 
         return {}
-
-        # TODO express matvec, addvec and dot cost formulas
 
     
     def C(self):
@@ -326,9 +335,9 @@ class Visualiser:
 
 
 def main():
-    #A = [[3,1,4,5,6],[4,46,7,8,6],[3,7,84,4,3]] # 3x5
+    A = [[3,1,4,5,6],[4,46,7,8,6],[3,7,84,4,3]] # 3x5
     #B = [[1,3,3,2],[3,6,2,27],[3,1,14,8],[0,3,31,7],[11,3,13,4]] # 5x4
-    A = [1,3,1,4,1]
+    #A = [1,3,1,4,1]
     B = [1,3,5,6,4]
     #B = [[1]]
     #A = [[2]]
@@ -341,7 +350,7 @@ def main():
 
 
     trace = Trace()
-    trace.calculate(A, B, "addvec")
+    trace.calculate(A, B, "matvec")
 
 if __name__ == "__main__":
     main()
