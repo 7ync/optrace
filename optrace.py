@@ -167,8 +167,8 @@ class Trace:
                 yield {
                     "event": "compute",
                     "muls": self.muls,
-                    "reads": self.reads,
                     "adds": self.adds,
+                    "reads": self.reads,
                     "flops": self.muls + self.adds,
                     "A_row": i,
                     "A_col": col,

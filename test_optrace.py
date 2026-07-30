@@ -18,11 +18,6 @@ class Test_matmul:
 
 
     def test_AB_alignment(self):
-        for _ in trace.calculate(self.A1, self.B1, "matmul"): pass
-        for _ in trace.calculate(self.A2, self.B2, "matmul"): pass
-        for _ in trace.calculate(self.A3, self.B3, "matmul"): pass
-        for _ in trace.calculate(self.A4, self.B4, "matmul"): pass
-
         with pytest.raises(ValueError):
             for _ in trace.calculate(self.A1, self.B2, "matmul"): pass
         with pytest.raises(ValueError):
@@ -194,20 +189,135 @@ class Test_matmul:
 
 class Test_matvec:
 
+    A1 = [[1,2],[5,5]]
+    A2 = [[1,4,4],[1,5,6],[6,2,5],[5,2,5]]
+    A3 = [[4,2,2,4]]
+
     B1 = [2,2,1]
     B2 = [4,5]
+    B3 = [4,7,2,3]
 
     def test_AB_alignment(self):
-        assert len(Test_matmul.A3[0]) == len(self.B2)
-        for _ in trace.calculate(Test_matmul.A3, self.B2, "matvec"): pass
-        assert len(Test_matmul.A1[0]) == len(self.B1)
-        for _ in trace.calculate(Test_matmul.A1, self.B1, "matvec"): pass
+        with pytest.raises(ValueError):
+            for _ in trace.calculate(self.A1, self.B1, "matvec"): pass
+        with pytest.raises(ValueError):
+            for _ in trace.calculate(self.A2, self.B2, "matvec"): pass
+        with pytest.raises(ValueError):
+            for _ in trace.calculate(self.A1, self.B3, "matvec"): pass
+        with pytest.raises(ValueError):
+            for _ in trace.calculate(self.A3, self.B1, "matvec"): pass
 
     def test_calculate(self):
-        ...
+        assert len(self.A1[0]) == len(self.B2)
+        for _ in trace.calculate(self.A1, self.B2, "matvec"): pass
+        cost = trace.get_expected_cost("matvec")
+        assert len(trace.C()) == 2 # type: ignore
+        assert trace.C() == [14,45]
+        assert cost == {"muls": 4, "adds": 2, "reads": 8, "writes": 2}
+
+        assert len(self.A2[0]) == len(self.B1)
+        for _ in trace.calculate(self.A2, self.B1, "matvec"): pass
+        cost = trace.get_expected_cost("matvec")
+        assert len(trace.C()) == 4 # type: ignore
+        assert trace.C() == [14,18,21,19]
+        assert cost == {"muls": 12, "adds": 8, "reads": 24, "writes": 4}
+
+        assert len(self.A3[0]) == len(self.B3)
+        for _ in trace.calculate(self.A3, self.B3, "matvec"): pass
+        cost = trace.get_expected_cost("matvec")
+        assert len(trace.C()) == 1 # type: ignore
+        assert cost == {"muls": 4, "adds": 3, "reads": 8, "writes": 1}
 
     def test_yield_data(self):
         ...
+        events = list(trace.calculate(self.A2, self.B1, "matvec"))
+
+        m = len(self.A2)
+        p = len(self.B1)
+
+        compute_events = m*p
+        write_events = m
+
+
+        assert len(events) == compute_events + write_events + 1
+
+        expected_init = {
+            "event": "init",
+            "A_rows": m, "A_cols": len(self.A2[0]),
+            "B_elements": p, "C_elements": m,
+        }
+
+        assert events[0] == expected_init
+
+        expected_compute_1 = {
+            "event": "compute",
+            "muls": 1, "adds": 0, "reads": 2, "flops": 1,
+            "A_row": 0, "A_col": 0, "B_element": 0,
+        }
+
+        assert events[1] == expected_compute_1
+
+        expected_write_1 = {
+            "event": "write",
+            "writes": 1,
+            "C_element": 0
+        }
+
+        assert events[4] == expected_write_1
+
+        expected_compute_final = {
+            "event": "compute",
+            "muls": m*p, "adds": m*(p-1), "reads": 2*m*p, "flops": (m*p) + m*(p-1),
+            "A_row": m-1, "A_col": p-1, "B_element": p-1
+        }
+
+        assert events[-2] == expected_compute_final
+
+
+        events = list(trace.calculate(self.A1, self.B2, "matvec"))
+        m = len(self.A1)
+        p = len(self.B2)
+
+        expected_events = [
+            {
+                "event": "init",
+                "A_rows": m, "A_cols": len(self.A1[0]),
+                "B_elements": p, "C_elements": m,
+            },
+            {
+                "event": "compute",
+                "muls": 1, "adds": 0, "reads": 2, "flops": 1,
+                "A_row": 0, "A_col": 0, "B_element": 0,
+            },
+            {
+                "event": "compute",
+                "muls": 2, "adds": 1, "reads": 4, "flops": 3,
+                "A_row": 0, "A_col": 1, "B_element": 1,
+            },
+            {
+                "event": "write",
+                "writes": 1,
+                "C_element": 0,
+            },
+            {
+                "event": "compute",
+                "muls": 3, "adds": 1, "reads": 6, "flops": 4,
+                "A_row": 1, "A_col": 0, "B_element": 0,
+            },
+            {
+                "event": "compute",
+                "muls": 4, "adds": 2, "reads": 8, "flops": 6,
+                "A_row": 1, "A_col": 1, "B_element": 1
+            },
+            {
+                "event": "write",
+                "writes": 2,
+                "C_element": 1
+            },
+        ]
+
+        assert expected_events == events
+
 
 class Test_addvec:
     ...
