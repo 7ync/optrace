@@ -9,14 +9,6 @@ class Test_matmul:
     A2 = [[5,51,1,5,6],[4,6,7,8,4],[4,3,7,7,7]] # 3x5
     A3 = [[1,2],[5,5]] # 2x2 
     A4 = [[2]] # 1x1
-    A5 = [[],[],[]] # empty
-    A6 = [] # empty
-    A7 = [3] # invalid
-    A8 = [[3,2],[3,[]]] # invalid
-    A9 = [[4,1,3],[3,4,"1"]] # invalid
-    A10 = [[3,3,1],[1,4],[4,4]] # unequal rows
-    A11 = [[1,3],[1,5,5],[1,4,1]] # unequal rows
-    A12 = [[4,9,True, 0],[0,2,4,5]]
 
 
     B1 = [[1,4,5,6,4,3,1],[3,5,6,7,4,3,6],[1,4,6,4,3,5,7]] # 3x7
@@ -24,30 +16,8 @@ class Test_matmul:
     B3 = [[4,2],[2,8]] # 2x2
     B4 = [[4]] # 1x1
 
-    def test_equal_rows(self):
-        with pytest.raises(ValueError):
-            trace.validate_matrix(self.A10)
-        with pytest.raises(ValueError):
-            trace.validate_matrix(self.A11)
 
-        trace.validate_matrix(self.A1)
-        trace.validate_matrix(self.A4)
-
-
-    def test_empty_matrix(self):
-        with pytest.raises(ValueError):
-            trace.validate_matrix(self.A5)
-        with pytest.raises(ValueError):
-            trace.validate_matrix(self.A6)
-        with pytest.raises(ValueError):
-            trace.validate_matrix(self.A7)
-
-        trace.validate_matrix(self.A3)
-        trace.validate_matrix(self.B2)
-        trace.validate_matrix(self.B4)
-
-
-    def test_valid_AB_size(self):
+    def test_AB_alignment(self):
         for _ in trace.calculate(self.A1, self.B1, "matmul"): pass
         for _ in trace.calculate(self.A2, self.B2, "matmul"): pass
         for _ in trace.calculate(self.A3, self.B3, "matmul"): pass
@@ -59,15 +29,7 @@ class Test_matmul:
             for _ in trace.calculate(self.A2, self.B3, "matmul"): pass
         with pytest.raises(ValueError):
             for _ in trace.calculate(self.A3, self.B4, "matmul"): pass
-             
 
-    def test_valid_elements(self):
-        with pytest.raises(ValueError): 
-            trace.validate_matrix(self.A8)
-        with pytest.raises(ValueError):
-            trace.validate_matrix(self.A9)
-        with pytest.raises(ValueError):
-            trace.validate_matrix(self.A12)
 
     def test_calculation(self):
         for _ in trace.calculate(self.A1, self.B1, "matmul"): pass
@@ -230,5 +192,68 @@ class Test_matmul:
         assert events == expected_events
 
 
-    
+class Test_matvec:
 
+    B1 = [2,2,1]
+    B2 = [4,5]
+
+    def test_AB_alignment(self):
+        assert len(Test_matmul.A3[0]) == len(self.B2)
+        for _ in trace.calculate(Test_matmul.A3, self.B2, "matvec"): pass
+        assert len(Test_matmul.A1[0]) == len(self.B1)
+        for _ in trace.calculate(Test_matmul.A1, self.B1, "matvec"): pass
+
+    def test_calculate(self):
+        ...
+
+    def test_yield_data(self):
+        ...
+
+class Test_addvec:
+    ...
+
+class Test_dot:
+    ...
+
+class Test_validators:
+
+    def test_unequal_rows(self):
+        with pytest.raises(ValueError):
+            trace.validate_matrix([[1,2],[4,5,4],[4,6,2]])
+        with pytest.raises(ValueError):
+            trace.validate_matrix([[3,3,1],[1,4],[4,4]])
+
+
+    def test_invalid_elements(self):
+        with pytest.raises(ValueError): 
+            trace.validate_matrix([[3,2],[3,[]]])
+        with pytest.raises(ValueError):
+            trace.validate_matrix([[4,1,3],[3,4,"1"]])
+        with pytest.raises(ValueError):
+            trace.validate_matrix([[4,9,True,0],[0,2,4,5]])
+        with pytest.raises(ValueError):
+            trace.validate_matrix([3])
+        with pytest.raises(ValueError):
+            trace.validate_matrix([[],[],[]])
+        with pytest.raises(ValueError):
+            trace.validate_matrix([])
+
+        with pytest.raises(ValueError):
+            trace.validate_vector([[1,3],[3,5]])
+        with pytest.raises(ValueError):
+            trace.validate_vector([3,4,[],5])
+        with pytest.raises(ValueError):
+            trace.validate_vector([5,1,"3"])
+        with pytest.raises(ValueError):
+            trace.validate_vector([])
+        with pytest.raises(ValueError):
+            trace.validate_vector([6,True,9,2])
+
+    def test_valid_inputs(self):
+        trace.validate_matrix([[3,4,1,4],[41,3,11,1],[3,5,2,2]])
+        trace.validate_matrix([[1]])
+        trace.validate_matrix([[34,42],[3,1]])
+
+        trace.validate_vector([1,3,4,3,4])
+        trace.validate_vector([1])
+        trace.validate_vector([3,4])
