@@ -103,6 +103,132 @@ class Test_matmul:
         assert cost == {"muls": 1, "adds": 0, "reads": 2, "writes": 1}
 
     def test_yield_data(self):
-        events = list(trace.calculate(self.A4, self.B4, "matmul"))
-        # TODO
+        events = list(trace.calculate(self.A1, self.B1, "matmul"))
+
+        m = len(self.A1)
+        n = len(self.B1)
+        p = len(self.B1[0])
+
+        compute_events = m*n*p
+        write_events = m*p
+
+        assert len(events) == compute_events + write_events + 1
+
+        expected_init = {
+            "event": "init", 
+            "A_rows": m, "A_cols": len(self.A1[0]), 
+            "B_rows": n, "B_cols": p, 
+            "C_rows": m, "C_cols": p,
+            }
+
+        assert events[0] == expected_init
+
+        expected_compute_1 = {
+            "event": "compute", 
+            "muls": 1, "adds": 0, "reads": 2, "flops": 1, 
+            "i": 0, "j": 0, "k": 0
+        }
+
+        assert events[1] == expected_compute_1
+
+        expected_write_1 = {
+            "event": "write",
+            "writes": 1,
+            "i": 0, "j": 0,
+        }
+
+        assert events[len(self.B1) + 1] == expected_write_1
+
+        expected_compute_final = {
+            "event": "compute",
+            "muls": m*n*p,
+            "adds": m*p*(n-1),
+            "reads": 2*m*n*p,
+            "flops": (m*p*(n-1)) + (m*n*p),
+            "i": m - 1,
+            "j": p - 1,
+            "k": n - 1,
+        }
+
+        assert events[-2] == expected_compute_final
+
+
+        events = list(trace.calculate(self.A3, self.B3, "matmul"))
+        m = len(self.A3)
+        n = len(self.B3)
+        p = len(self.B3[0])
+
+        expected_events = [
+            {
+                "event": "init", 
+                "A_rows": m, "A_cols": len(self.A3[0]), 
+                "B_rows": n, "B_cols": p, 
+                "C_rows": m, "C_cols": p,
+            },
+            {
+                "event": "compute",
+                "muls": 1, "adds": 0, "reads": 2, "flops": 1, 
+                "i": 0, "j": 0, "k": 0
+            },
+            {
+                "event": "compute", 
+                "muls": 2, "adds": 1, "reads": 4, "flops": 3, 
+                "i": 0, "j": 0, "k": 1
+            },
+            {
+                "event": "write",
+                "writes": 1,
+                "i": 0, "j": 0,
+            },
+            {
+                "event": "compute", 
+                "muls": 3, "adds": 1, "reads": 6, "flops": 4, 
+                "i": 0, "j": 1, "k": 0
+            },
+            {
+                "event": "compute", 
+                "muls": 4, "adds": 2, "reads": 8, "flops": 6, 
+                "i": 0, "j": 1, "k": 1
+            },
+            {
+                "event": "write",
+                "writes": 2,
+                "i": 0, "j": 1,
+            },
+            {
+                "event": "compute", 
+                "muls": 5, "adds": 2, "reads": 10, "flops": 7, 
+                "i": 1, "j": 0, "k": 0
+            },
+            {
+                "event": "compute", 
+                "muls": 6, "adds": 3, "reads": 12, "flops": 9, 
+                "i": 1, "j": 0, "k": 1
+            },
+            {
+                "event": "write",
+                "writes": 3,
+                "i": 1, "j": 0,
+            },
+            {
+                "event": "compute", 
+                "muls": 7, "adds": 3, "reads": 14, "flops": 10, 
+                "i": 1, "j": 1, "k": 0
+            },
+            {
+                "event": "compute", 
+                "muls": 8, "adds": 4, "reads": 16, "flops": 12, 
+                "i": 1, "j": 1, "k": 1
+            },
+            {
+                "event": "write",
+                "writes": 4,
+                "i": 1, "j": 1,
+            },
+        ]
+
+        assert events == expected_events
+
+
+    
 
