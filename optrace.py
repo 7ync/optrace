@@ -261,8 +261,8 @@ class Trace:
                 "event": "compute",
                 "index": i,
                 "muls": self.muls,
-                "reads": self.reads,
                 "adds": self.adds,
+                "reads": self.reads,
             }
 
         self._C = accumulator

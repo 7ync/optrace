@@ -434,7 +434,114 @@ class Test_addvec:
         assert events == expected_events
 
 class Test_dot:
-    ...
+    A1 = [3, 6, 1, 5]
+    A2 = [1, 3.1, 3]
+    A3 = [1, 5, 0, 9, 4, 4, 2]
+    A4 = [3, 13]
+
+    B1 = [10, 3, 1, 7]
+    B2 = [4, 0, 4]
+    B3 = [5, 7, 2, 2.4, 5, 5.5, 9.9]
+    B4 = [1, 4.3]
+
+
+    def test_AB_alignment(self):
+        with pytest.raises(ValueError):
+            for _ in trace.calculate([3, 4, 9, 1], [0, 1, 4], "dot"): pass
+
+        with pytest.raises(ValueError):
+            for _ in trace.calculate([1, 4.1], [3, 4, 8], "dot"): pass
+
+    def test_calculation(self):
+        assert len(self.A1) == len(self.B1)
+        for _ in trace.calculate(self.A1, self.B1, "dot"): pass
+        cost = trace.get_expected_cost("dot")
+        assert len([trace.C()]) == 1 # type: ignore
+        assert trace.C() == 84
+        assert cost == {"muls": 4, "adds": 3, "reads": 8, "writes": 1}
+
+        assert len(self.A2) == len(self.B2)
+        for _ in trace.calculate(self.A2, self.B2, "dot"): pass
+        cost = trace.get_expected_cost("dot")
+        assert isinstance(trace.C(), (int, float))
+        assert trace.C() == 16
+        assert cost == {"muls": 3, "adds": 2, "reads": 6, "writes": 1}
+
+    def test_yield_data(self):
+        events = list(trace.calculate(self.A3, self.B3, "dot"))
+        
+        m = len(self.A3)
+        p = len(self.B3)
+
+        compute_events = m
+        write_events = 1
+
+        assert len(events) == compute_events + write_events + 1
+
+        expected_init = {
+            "event": "init",
+            "A_len": m, "B_len": p
+        }
+
+        assert events[0] == expected_init
+
+        expected_compute_1 = {
+            "event": "compute",
+            "index": 0,
+            "muls": 1,
+            "adds": 0,
+            "reads": 2,
+        }
+
+        assert events[1] == expected_compute_1
+
+        expected_compute_final = {
+            "event": "compute",
+            "index": m-1,
+            "muls": m,
+            "adds": p-1,
+            "reads": 2*m,
+
+        }
+
+        assert events[-2] == expected_compute_final
+
+        expected_write = {
+            "event": "write",
+            "writes": 1,
+        }
+
+        assert events[-1] == expected_write
+
+
+        events = list(trace.calculate(self.A4, self.B4, "dot"))
+
+        m = len(self.A4)
+        p = len(self.B4)
+
+        expected_events = [
+            {
+                "event": "init",
+                "A_len": m, "B_len": p
+            },
+            {
+                "event": "compute",
+                "index": 0, "muls": 1,
+                "adds": 0, "reads": 2,
+            },
+            {
+                "event": "compute",
+                "index": 1, "muls": 2,
+                "adds": 1, "reads": 4,
+            },
+            {
+                "event": "write",
+                "writes": 1,
+            },
+        ]
+
+        assert events == expected_events
+        
 
 class Test_validators:
 
