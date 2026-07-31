@@ -5,15 +5,15 @@ trace = Trace()
 
 class Test_matmul:
     
-    A1 = [[1,4,4],[1,5,6],[6,2,5],[5,2,5]] # 4x3
-    A2 = [[5,51,1,5,6],[4,6,7,8,4],[4,3,7,7,7]] # 3x5
-    A3 = [[1,2],[5,5]] # 2x2 
+    A1 = [[1, 4, 4],[1, 5, 6],[6, 2, 5],[5, 2, 5]] # 4x3
+    A2 = [[5, 51, 1, 5, 6],[4, 6, 7, 8, 4],[4, 3, 7, 7, 7]] # 3x5
+    A3 = [[1, 2],[5, 5]] # 2x2 
     A4 = [[2]] # 1x1
 
 
-    B1 = [[1,4,5,6,4,3,1],[3,5,6,7,4,3,6],[1,4,6,4,3,5,7]] # 3x7
-    B2 = [[1,2],[1,7],[6,3],[9,2],[0,1]] # 5x2
-    B3 = [[4,2],[2,8]] # 2x2
+    B1 = [[1, 4, 5, 6, 4, 3, 1],[3, 5, 6, 7, 4, 3, 6],[1, 4, 6, 4, 3, 5, 7]] # 3x7
+    B2 = [[1, 2],[1, 7],[6, 3],[9, 2],[0, 1]] # 5x2
+    B3 = [[4, 2],[2, 8]] # 2x2
     B4 = [[4]] # 1x1
 
 
@@ -31,24 +31,24 @@ class Test_matmul:
         cost = trace.get_expected_cost("matmul")
         assert len(trace.C()) == 4 # type: ignore
         assert len(trace.C()[0]) == 7 # type: ignore
-        assert trace.C() == [[17,40,53,50,32,35,53], 
-                             [22,53,71,65,42,48,73], 
-                             [17,54,72,70,47,49,53], 
-                             [16,50,67,64,43,46,52]]
+        assert trace.C() == [[17, 40, 53, 50, 32, 35, 53], 
+                             [22, 53, 71, 65, 42, 48, 73], 
+                             [17, 54, 72, 70, 47, 49, 53], 
+                             [16, 50, 67, 64, 43, 46, 52]]
         assert cost == {"muls": 84, "adds": 56, "reads": 168, "writes": 28}
         
 
         for _ in trace.calculate(self.A2, self.B2, "matmul"): pass
         assert len(trace.C()) == 3 # type: ignore
         assert len(trace.C()[0]) == 2 # type: ignore
-        assert trace.C() == [[107,386], [124,91], [112,71]]
+        assert trace.C() == [[107, 386], [124, 91], [112, 71]]
         cost = trace.get_expected_cost("matmul")
         assert cost == {"muls": 30, "adds": 24, "reads": 60, "writes": 6}
 
         for _ in trace.calculate(self.A3, self.B3, "matmul"): pass
         assert len(trace.C()) == 2 # type: ignore
         assert len(trace.C()[0]) == 2 # type: ignore
-        assert trace.C() == [[8,18], [30,50]]
+        assert trace.C() == [[8, 18], [30, 50]]
         cost = trace.get_expected_cost("matmul")
         assert cost == {"muls": 8, "adds": 4, "reads": 16, "writes": 4}
 
@@ -189,13 +189,13 @@ class Test_matmul:
 
 class Test_matvec:
 
-    A1 = [[1,2],[5,5]]
-    A2 = [[1,4,4],[1,5,6],[6,2,5],[5,2,5]]
-    A3 = [[4,2,2,4]]
+    A1 = [[1, 2],[5, 5]]
+    A2 = [[1, 4, 4],[1, 5, 6],[6, 2, 5],[5, 2, 5]]
+    A3 = [[4, 2, 2, 4]]
 
-    B1 = [2,2,1]
-    B2 = [4,5]
-    B3 = [4,7,2,3]
+    B1 = [2, 2, 1]
+    B2 = [4, 5]
+    B3 = [4, 7, 2, 3]
 
     def test_AB_alignment(self):
         with pytest.raises(ValueError):
@@ -212,14 +212,14 @@ class Test_matvec:
         for _ in trace.calculate(self.A1, self.B2, "matvec"): pass
         cost = trace.get_expected_cost("matvec")
         assert len(trace.C()) == 2 # type: ignore
-        assert trace.C() == [14,45]
+        assert trace.C() == [14, 45]
         assert cost == {"muls": 4, "adds": 2, "reads": 8, "writes": 2}
 
         assert len(self.A2[0]) == len(self.B1)
         for _ in trace.calculate(self.A2, self.B1, "matvec"): pass
         cost = trace.get_expected_cost("matvec")
         assert len(trace.C()) == 4 # type: ignore
-        assert trace.C() == [14,18,21,19]
+        assert trace.C() == [14, 18, 21, 19]
         assert cost == {"muls": 12, "adds": 8, "reads": 24, "writes": 4}
 
         assert len(self.A3[0]) == len(self.B3)
@@ -229,7 +229,6 @@ class Test_matvec:
         assert cost == {"muls": 4, "adds": 3, "reads": 8, "writes": 1}
 
     def test_yield_data(self):
-        ...
         events = list(trace.calculate(self.A2, self.B1, "matvec"))
 
         m = len(self.A2)
@@ -320,7 +319,119 @@ class Test_matvec:
 
 
 class Test_addvec:
-    ...
+    A1 = [1, 3, 55, 1]
+    A2 = [6.4, 3.2, 4]
+    A3 = [4, 2, 1, 0, 4.5, 4.2]
+    A4 = [4, 9]
+
+
+    B1 = [5, 52, 1, 6]
+    B2 = [2, 3, 5]
+    B3 = [7, 7, 0, 4, 3.3, 5.3]
+    B4 = [5, 4.2]
+
+    def test_AB_alignment(self):
+        with pytest.raises(ValueError):
+            for _ in trace.calculate([3, 4, 1, 4], [1, 3], "addvec"): pass
+        with pytest.raises(ValueError):
+            for _ in trace.calculate([4.5, 44.4, 2, 2], [4,4], "addvec"): pass
+
+    def test_calculate(self):
+        assert len(self.A1) == len(self.B1)
+        for _ in trace.calculate(self.A1, self.B1, "addvec"): pass
+        cost = trace.get_expected_cost("addvec")
+        assert len(trace.C()) == 4 # type: ignore
+        assert trace.C() == pytest.approx([6, 55, 56, 7])
+        assert cost == {"muls": 0, "adds": 4, "reads": 8, "writes": 4}
+
+        assert len(self.A2) == len(self.B2)
+        for _ in trace.calculate(self.A2, self.B2, "addvec"): pass
+        cost = trace.get_expected_cost("addvec")
+        assert len(trace.C()) == 3 # type: ignore
+        assert trace.C() == pytest.approx([8.4, 6.2, 9])
+        assert cost == {"muls": 0, "adds": 3, "reads": 6, "writes": 3}
+
+    def test_yield_data(self):
+        events = list(trace.calculate(self.A3, self.B3, "addvec"))
+
+        m = len(self.A3)
+        p = len(self.B3)
+
+        compute_events = m
+        write_events = m
+
+        assert len(events) == compute_events + write_events + 1
+
+        expected_init = {
+            "event": "init",
+            "A_len": m, "B_len": p, "C_len": m
+        }
+
+        assert events[0] == expected_init
+
+        expected_compute_1 = {
+            "event": "compute",
+            "A_index": 0,
+            "B_index": 0,
+            "adds": 1,
+            "reads": 2,
+        }
+
+        assert events[1] == expected_compute_1
+
+        expected_write_1 = {
+            "event": "write",
+            "C_index": 0,
+            "writes": 1,
+        }
+
+        assert events[2] == expected_write_1
+
+        expected_compute_final = {
+            "event": "compute",
+            "A_index": m-1,
+            "B_index": p-1,
+            "adds": m,
+            "reads": 2*m,
+
+        }
+
+        assert events[-2] == expected_compute_final
+
+
+        events = list(trace.calculate(self.A4, self.B4, "addvec"))
+
+        m = len(self.A4)
+        p = len(self.B4)
+
+        expected_events = [
+            {
+                "event": "init",
+                "A_len": m, "B_len": p, "C_len": m
+            },
+            {
+                "event": "compute",
+                "A_index": 0, "B_index": 0,
+                "adds": 1, "reads": 2
+            },
+            {
+                "event": "write",
+                "C_index": 0,
+                "writes": 1,
+            },
+            {
+                "event": "compute",
+                "A_index": 1, "B_index": 1,
+                "adds": 2, "reads": 4
+            },
+            {
+                "event": "write",
+                "C_index": 1,
+                "writes": 2,
+            },
+        ]
+
+        assert events == expected_events
 
 class Test_dot:
     ...
@@ -329,18 +440,18 @@ class Test_validators:
 
     def test_unequal_rows(self):
         with pytest.raises(ValueError):
-            trace.validate_matrix([[1,2],[4,5,4],[4,6,2]])
+            trace.validate_matrix([[1, 2],[4, 5, 4],[4, 6, 2]])
         with pytest.raises(ValueError):
-            trace.validate_matrix([[3,3,1],[1,4],[4,4]])
+            trace.validate_matrix([[3, 3, 1],[1, 4],[4, 4]])
 
 
     def test_invalid_elements(self):
         with pytest.raises(ValueError): 
-            trace.validate_matrix([[3,2],[3,[]]])
+            trace.validate_matrix([[3, 2],[3, []]])
         with pytest.raises(ValueError):
-            trace.validate_matrix([[4,1,3],[3,4,"1"]])
+            trace.validate_matrix([[4, 1, 3],[3, 4, "1"]])
         with pytest.raises(ValueError):
-            trace.validate_matrix([[4,9,True,0],[0,2,4,5]])
+            trace.validate_matrix([[4, 9, True, 0],[0, 2, 4, 5]])
         with pytest.raises(ValueError):
             trace.validate_matrix([3])
         with pytest.raises(ValueError):
@@ -349,21 +460,23 @@ class Test_validators:
             trace.validate_matrix([])
 
         with pytest.raises(ValueError):
-            trace.validate_vector([[1,3],[3,5]])
+            trace.validate_vector([[1, 3],[3, 5]])
         with pytest.raises(ValueError):
-            trace.validate_vector([3,4,[],5])
+            trace.validate_vector([3, 4, [], 5])
         with pytest.raises(ValueError):
-            trace.validate_vector([5,1,"3"])
+            trace.validate_vector([5, 1, "3"])
         with pytest.raises(ValueError):
             trace.validate_vector([])
         with pytest.raises(ValueError):
-            trace.validate_vector([6,True,9,2])
+            trace.validate_vector([6, True, 9, 2])
 
     def test_valid_inputs(self):
-        trace.validate_matrix([[3,4,1,4],[41,3,11,1],[3,5,2,2]])
+        trace.validate_matrix([[3, 4, 1, 4],[41, 3, 11, 1],[3, 5, 2, 2]])
         trace.validate_matrix([[1]])
-        trace.validate_matrix([[34,42],[3,1]])
+        trace.validate_matrix([[34, 42],[3, 1]])
+        trace.validate_matrix([[3.4, 1, 4.5, 5.25], [2, 0.4, 5, 2]])
 
-        trace.validate_vector([1,3,4,3,4])
+        trace.validate_vector([1, 3, 4, 3, 4])
         trace.validate_vector([1])
-        trace.validate_vector([3,4])
+        trace.validate_vector([3, 4])
+        trace.validate_vector([4.144, 2.24, 0.1, 4])
