@@ -12,25 +12,47 @@ class Trace:
             "addvec": self.addvec,
             "dot": self.dot,
         }
+        self._A: list | None = None
+        self._B: list | None = None
+        self._C: list | int | float | None = None
+        self._op: str | None = None
+        self.state = "inactive"
 
     def calculate(self, A, B, op):
+        if self.state == "in_progress":
+            raise RuntimeError
         self._A = A
         self._B = B
-        self.op = op
-
         self._C = 0
+        self._op = op
+
+        if self._op == None:
+            raise RuntimeError
 
         self.muls = 0
         self.adds = 0
         self.reads = 0
         self.writes = 0
 
-        return self._ops[self.op]()
+        self.state = "in_progress"
 
-    # TODO harden generator lifecycle state management
+        try:
+            yield from self._ops[self._op]()
+
+        except (Exception, GeneratorExit):
+            self.state = "inactive"
+            self._A = None
+            self._B = None
+            self._C = None
+            self._op = None
+            raise
 
 
     def matmul(self):
+        if self._A is None:
+            raise RuntimeError
+        if self._B is None:
+            raise RuntimeError
 
         self.validate_matrix(self._A)
         self.validate_matrix(self._B)
@@ -98,6 +120,8 @@ class Trace:
                     "j": j,
                 }
 
+        self.state = "complete"
+
     def validate_matrix(self, matrix):
         # check matrix is a non-empty list
         if not isinstance(matrix, list) or not matrix:
@@ -132,6 +156,12 @@ class Trace:
         
 
     def matvec(self):
+        if self._A is None:
+            raise RuntimeError
+        if self._B is None:
+            raise RuntimeError
+
+
         self.validate_matrix(self._A)
         self.validate_vector(self._B)
 
@@ -183,9 +213,16 @@ class Trace:
                 "writes": self.writes,
                 "C_element": i
             }
+
+        self.state = "complete"
     
 
     def addvec(self):
+        if self._A is None:
+            raise RuntimeError
+        if self._B is None:
+            raise RuntimeError
+
         self.validate_vector(self._A)
         self.validate_vector(self._B)
 
@@ -226,8 +263,15 @@ class Trace:
                 "writes": self.writes,
             }
 
+        self.state = "complete"
+
 
     def dot(self):
+        if self._A is None:
+            raise RuntimeError
+        if self._B is None:
+            raise RuntimeError
+
         self.validate_vector(self._A)
         self.validate_vector(self._B)
 
@@ -272,17 +316,21 @@ class Trace:
             "writes": self.writes,
         }
 
+        self.state = "complete"
+
 
     def report(self):
+        if self.state != "complete":
+            raise RuntimeError
 
-        formula_count = self.get_expected_cost(self.op)
+        formula_count = self.get_expected_cost()
         engine_count = {"muls": self.muls, "adds": self.adds, "reads": self.reads, "writes": self.writes}
 
         if formula_count != engine_count:
            raise RuntimeError
 
         report = f"""
-            Operation: {self.op}
+            Operation: {self._op}
             Result: {self._C}
             Multiplications: {engine_count["muls"]}
             Additions: {engine_count["adds"]}
@@ -293,9 +341,15 @@ class Trace:
         print(report)
 
 
-    def get_expected_cost(self, op):
+    def get_expected_cost(self):
+        if self._A is None:
+            raise RuntimeError
+        if self._B is None:
+            raise RuntimeError
+        if self.state != "complete":
+            raise RuntimeError
 
-        match op:
+        match self._op:
             case "matmul":
                 m = len(self._A)
                 n = len(self._A[0])
@@ -318,7 +372,12 @@ class Trace:
 
     
     def C(self):
+        if self.state != "complete":
+            raise RuntimeError
         return self._C
+
+    def op(self):
+        return self._op
 
 
 

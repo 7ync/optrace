@@ -28,7 +28,7 @@ class Test_matmul:
 
     def test_calculation(self):
         for _ in trace.calculate(self.A1, self.B1, "matmul"): pass
-        cost = trace.get_expected_cost("matmul")
+        cost = trace.get_expected_cost()
         assert len(trace.C()) == 4 # type: ignore
         assert len(trace.C()[0]) == 7 # type: ignore
         assert trace.C() == [[17, 40, 53, 50, 32, 35, 53], 
@@ -42,21 +42,21 @@ class Test_matmul:
         assert len(trace.C()) == 3 # type: ignore
         assert len(trace.C()[0]) == 2 # type: ignore
         assert trace.C() == [[107, 386], [124, 91], [112, 71]]
-        cost = trace.get_expected_cost("matmul")
+        cost = trace.get_expected_cost()
         assert cost == {"muls": 30, "adds": 24, "reads": 60, "writes": 6}
 
         for _ in trace.calculate(self.A3, self.B3, "matmul"): pass
         assert len(trace.C()) == 2 # type: ignore
         assert len(trace.C()[0]) == 2 # type: ignore
         assert trace.C() == [[8, 18], [30, 50]]
-        cost = trace.get_expected_cost("matmul")
+        cost = trace.get_expected_cost()
         assert cost == {"muls": 8, "adds": 4, "reads": 16, "writes": 4}
 
         for _ in trace.calculate(self.A4, self.B4, "matmul"): pass
         assert len(trace.C()) == 1 # type: ignore
         assert len(trace.C()[0]) == 1 # type: ignore
         assert trace.C() == [[8]]
-        cost = trace.get_expected_cost("matmul")
+        cost = trace.get_expected_cost()
         assert cost == {"muls": 1, "adds": 0, "reads": 2, "writes": 1}
 
     def test_yield_data(self):
@@ -210,21 +210,21 @@ class Test_matvec:
     def test_calculate(self):
         assert len(self.A1[0]) == len(self.B2)
         for _ in trace.calculate(self.A1, self.B2, "matvec"): pass
-        cost = trace.get_expected_cost("matvec")
+        cost = trace.get_expected_cost()
         assert len(trace.C()) == 2 # type: ignore
         assert trace.C() == [14, 45]
         assert cost == {"muls": 4, "adds": 2, "reads": 8, "writes": 2}
 
         assert len(self.A2[0]) == len(self.B1)
         for _ in trace.calculate(self.A2, self.B1, "matvec"): pass
-        cost = trace.get_expected_cost("matvec")
+        cost = trace.get_expected_cost()
         assert len(trace.C()) == 4 # type: ignore
         assert trace.C() == [14, 18, 21, 19]
         assert cost == {"muls": 12, "adds": 8, "reads": 24, "writes": 4}
 
         assert len(self.A3[0]) == len(self.B3)
         for _ in trace.calculate(self.A3, self.B3, "matvec"): pass
-        cost = trace.get_expected_cost("matvec")
+        cost = trace.get_expected_cost()
         assert len(trace.C()) == 1 # type: ignore
         assert cost == {"muls": 4, "adds": 3, "reads": 8, "writes": 1}
 
@@ -339,14 +339,14 @@ class Test_addvec:
     def test_calculate(self):
         assert len(self.A1) == len(self.B1)
         for _ in trace.calculate(self.A1, self.B1, "addvec"): pass
-        cost = trace.get_expected_cost("addvec")
+        cost = trace.get_expected_cost()
         assert len(trace.C()) == 4 # type: ignore
         assert trace.C() == pytest.approx([6, 55, 56, 7])
         assert cost == {"muls": 0, "adds": 4, "reads": 8, "writes": 4}
 
         assert len(self.A2) == len(self.B2)
         for _ in trace.calculate(self.A2, self.B2, "addvec"): pass
-        cost = trace.get_expected_cost("addvec")
+        cost = trace.get_expected_cost()
         assert len(trace.C()) == 3 # type: ignore
         assert trace.C() == pytest.approx([8.4, 6.2, 9])
         assert cost == {"muls": 0, "adds": 3, "reads": 6, "writes": 3}
@@ -455,14 +455,14 @@ class Test_dot:
     def test_calculation(self):
         assert len(self.A1) == len(self.B1)
         for _ in trace.calculate(self.A1, self.B1, "dot"): pass
-        cost = trace.get_expected_cost("dot")
+        cost = trace.get_expected_cost()
         assert len([trace.C()]) == 1 # type: ignore
         assert trace.C() == 84
         assert cost == {"muls": 4, "adds": 3, "reads": 8, "writes": 1}
 
         assert len(self.A2) == len(self.B2)
         for _ in trace.calculate(self.A2, self.B2, "dot"): pass
-        cost = trace.get_expected_cost("dot")
+        cost = trace.get_expected_cost()
         assert isinstance(trace.C(), (int, float))
         assert trace.C() == 16
         assert cost == {"muls": 3, "adds": 2, "reads": 6, "writes": 1}
@@ -587,3 +587,82 @@ class Test_validators:
         trace.validate_vector([1])
         trace.validate_vector([3, 4])
         trace.validate_vector([4.144, 2.24, 0.1, 4])
+
+
+class Test_state:
+
+    def test_invalid_state(self):
+        trace = Trace()
+        assert trace.state == "inactive"
+
+        with pytest.raises(RuntimeError):
+            trace.get_expected_cost()
+        with pytest.raises(RuntimeError):
+            trace.C()
+        with pytest.raises(RuntimeError):
+            trace.report()
+
+        with pytest.raises(RuntimeError):
+            generator = trace.calculate([[1]],[[2]], None)
+            next(generator)
+
+        with pytest.raises(RuntimeError):
+            generator = trace.calculate(None, None, "matmul")
+            next(generator)
+
+        with pytest.raises(RuntimeError):
+            generator = trace.calculate(None, None, "matvec")
+            next(generator)
+
+        with pytest.raises(RuntimeError):
+            generator = trace.calculate(None, None, "dot")
+            next(generator)
+
+        with pytest.raises(RuntimeError):
+            generator = trace.calculate(None, None, "addvec")
+            next(generator)
+
+        with pytest.raises(RuntimeError):
+            generator = trace.calculate([[1]], [[2]], "matmul")
+            next(generator)
+
+            generator2 = trace.calculate([[1]], [[2]], "matmul")
+            next(generator2)
+
+    def test_state_abort(self):
+        trace = Trace()
+
+        assert trace.state == "inactive"
+        generator = trace.calculate([[1]], [[2]], "matmul")
+        next(generator)
+
+        assert trace.state == "in_progress"
+
+        generator.close()
+
+        assert trace.state == "inactive"
+        assert trace._A == None
+        assert trace._B == None
+        assert trace._C == None
+        assert trace._op == None
+
+    def test_intended_state(self):
+        trace = Trace()
+
+        assert trace.state == "inactive"
+        generator = trace.calculate([[1, 2], [0, 1]], [[3, 2], [0, 4]], "matmul")
+        next(generator)
+
+        assert trace.state == "in_progress"
+
+        for step in generator:
+            pass
+
+        assert trace.state == "complete"
+
+        trace.get_expected_cost()
+        trace.C()
+        trace.report()
+
+        generator = trace.calculate([[1]], [[0]], "matmul")
+        next(generator)
