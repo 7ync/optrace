@@ -1,7 +1,9 @@
 import pytest
 from optrace import Trace
 
-trace = Trace()
+@pytest.fixture
+def trace():
+    return Trace()
 
 class Test_matmul:
     
@@ -17,7 +19,7 @@ class Test_matmul:
     B4 = [[4]] # 1x1
 
 
-    def test_AB_alignment(self):
+    def test_AB_alignment(self, trace):
         with pytest.raises(ValueError):
             for _ in trace.calculate(self.A1, self.B2, "matmul"): pass
         with pytest.raises(ValueError):
@@ -26,7 +28,7 @@ class Test_matmul:
             for _ in trace.calculate(self.A3, self.B4, "matmul"): pass
 
 
-    def test_calculation(self):
+    def test_calculation(self, trace):
         for _ in trace.calculate(self.A1, self.B1, "matmul"): pass
         cost = trace.get_expected_cost()
         assert len(trace.C()) == 4 # type: ignore
@@ -59,7 +61,7 @@ class Test_matmul:
         cost = trace.get_expected_cost()
         assert cost == {"muls": 1, "adds": 0, "reads": 2, "writes": 1}
 
-    def test_yield_data(self):
+    def test_yield_data(self, trace):
         events = list(trace.calculate(self.A1, self.B1, "matmul"))
 
         m = len(self.A1)
@@ -197,7 +199,7 @@ class Test_matvec:
     B2 = [4, 5]
     B3 = [4, 7, 2, 3]
 
-    def test_AB_alignment(self):
+    def test_AB_alignment(self, trace):
         with pytest.raises(ValueError):
             for _ in trace.calculate(self.A1, self.B1, "matvec"): pass
         with pytest.raises(ValueError):
@@ -207,7 +209,7 @@ class Test_matvec:
         with pytest.raises(ValueError):
             for _ in trace.calculate(self.A3, self.B1, "matvec"): pass
 
-    def test_calculate(self):
+    def test_calculate(self, trace):
         assert len(self.A1[0]) == len(self.B2)
         for _ in trace.calculate(self.A1, self.B2, "matvec"): pass
         cost = trace.get_expected_cost()
@@ -228,7 +230,7 @@ class Test_matvec:
         assert len(trace.C()) == 1 # type: ignore
         assert cost == {"muls": 4, "adds": 3, "reads": 8, "writes": 1}
 
-    def test_yield_data(self):
+    def test_yield_data(self, trace):
         events = list(trace.calculate(self.A2, self.B1, "matvec"))
 
         m = len(self.A2)
@@ -330,13 +332,13 @@ class Test_addvec:
     B3 = [7, 7, 0, 4, 3.3, 5.3]
     B4 = [5, 4.2]
 
-    def test_AB_alignment(self):
+    def test_AB_alignment(self, trace):
         with pytest.raises(ValueError):
             for _ in trace.calculate([3, 4, 1, 4], [1, 3], "addvec"): pass
         with pytest.raises(ValueError):
             for _ in trace.calculate([4.5, 44.4, 2, 2], [4,4], "addvec"): pass
 
-    def test_calculate(self):
+    def test_calculate(self, trace):
         assert len(self.A1) == len(self.B1)
         for _ in trace.calculate(self.A1, self.B1, "addvec"): pass
         cost = trace.get_expected_cost()
@@ -351,7 +353,7 @@ class Test_addvec:
         assert trace.C() == pytest.approx([8.4, 6.2, 9])
         assert cost == {"muls": 0, "adds": 3, "reads": 6, "writes": 3}
 
-    def test_yield_data(self):
+    def test_yield_data(self, trace):
         events = list(trace.calculate(self.A3, self.B3, "addvec"))
 
         m = len(self.A3)
@@ -445,14 +447,14 @@ class Test_dot:
     B4 = [1, 4.3]
 
 
-    def test_AB_alignment(self):
+    def test_AB_alignment(self, trace):
         with pytest.raises(ValueError):
             for _ in trace.calculate([3, 4, 9, 1], [0, 1, 4], "dot"): pass
 
         with pytest.raises(ValueError):
             for _ in trace.calculate([1, 4.1], [3, 4, 8], "dot"): pass
 
-    def test_calculation(self):
+    def test_calculation(self, trace):
         assert len(self.A1) == len(self.B1)
         for _ in trace.calculate(self.A1, self.B1, "dot"): pass
         cost = trace.get_expected_cost()
@@ -467,7 +469,7 @@ class Test_dot:
         assert trace.C() == 16
         assert cost == {"muls": 3, "adds": 2, "reads": 6, "writes": 1}
 
-    def test_yield_data(self):
+    def test_yield_data(self, trace):
         events = list(trace.calculate(self.A3, self.B3, "dot"))
         
         m = len(self.A3)
@@ -545,14 +547,14 @@ class Test_dot:
 
 class Test_validators:
 
-    def test_unequal_rows(self):
+    def test_unequal_rows(self, trace):
         with pytest.raises(ValueError):
             trace.validate_matrix([[1, 2],[4, 5, 4],[4, 6, 2]])
         with pytest.raises(ValueError):
             trace.validate_matrix([[3, 3, 1],[1, 4],[4, 4]])
 
 
-    def test_invalid_elements(self):
+    def test_invalid_elements(self, trace):
         with pytest.raises(ValueError): 
             trace.validate_matrix([[3, 2],[3, []]])
         with pytest.raises(ValueError):
@@ -577,7 +579,7 @@ class Test_validators:
         with pytest.raises(ValueError):
             trace.validate_vector([6, True, 9, 2])
 
-    def test_valid_inputs(self):
+    def test_valid_inputs(self, trace):
         trace.validate_matrix([[3, 4, 1, 4],[41, 3, 11, 1],[3, 5, 2, 2]])
         trace.validate_matrix([[1]])
         trace.validate_matrix([[34, 42],[3, 1]])
@@ -591,8 +593,7 @@ class Test_validators:
 
 class Test_state:
 
-    def test_invalid_state(self):
-        trace = Trace()
+    def test_invalid_state(self, trace):
         assert trace.state == "inactive"
 
         with pytest.raises(RuntimeError):
@@ -629,8 +630,7 @@ class Test_state:
             generator2 = trace.calculate([[1]], [[2]], "matmul")
             next(generator2)
 
-    def test_state_abort(self):
-        trace = Trace()
+    def test_state_abort(self, trace):
 
         assert trace.state == "inactive"
         generator = trace.calculate([[1]], [[2]], "matmul")
@@ -646,8 +646,7 @@ class Test_state:
         assert trace._C == None
         assert trace._op == None
 
-    def test_intended_state(self):
-        trace = Trace()
+    def test_intended_state(self, trace):
 
         assert trace.state == "inactive"
         generator = trace.calculate([[1, 2], [0, 1]], [[3, 2], [0, 4]], "matmul")
