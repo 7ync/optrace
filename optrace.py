@@ -382,7 +382,19 @@ class Trace:
 
 
 class Visualiser:
-    ... # TODO  
+
+    def __init__(self, engine):
+        self._engine = engine
+
+    def get_events(self, A, B, op):
+        self._op = op
+        # TODO check_size(A)
+        # TODO check_size(B)
+
+        events = list(self._engine.calculate(A, B, op))
+
+        return events
+        
 
 
 def main():
