@@ -1,34 +1,22 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field
+from typing import Annotated
+
+Vector = Annotated[list[int|float], Field(max_length=12)]
+Matrix = Annotated[list[Vector], Field(max_length=12)]
+
 
 class Matmul(BaseModel):
-    A: list[list[int|float]]
-    B: list[list[int|float]]
-
-    @field_validator("A")
-    def max_size_A(cls, A):
-        if not A:
-            raise ValueError("empty matrix")
-        if len(A) > 12:
-            raise ValueError("number of rows cannot exceed 12")
-        if len(A[0]) > 12: 
-            raise ValueError("number of columns cannot exceed 12")
-        
-        return A
-
-    @field_validator("B")
-    def max_size_B(cls, B):
-        if len(B) > 12:
-            raise ValueError("number of rows cannot exceed 12")
-        if len(B[0]) > 12: 
-            raise ValueError("number of columns cannot exceed 12")
-
-        return B
+    A: Matrix
+    B: Matrix
 
 class Matvec(BaseModel):
-    ...
+    A: Matrix
+    B: Vector
 
 class Addvec(BaseModel):
-    ...
+    A: Vector
+    B: Vector
 
 class Dot(BaseModel):
-    ...
+    A: Vector
+    B: Vector
