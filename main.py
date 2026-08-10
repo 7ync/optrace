@@ -1,10 +1,25 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from engine import Trace, Visualiser
 from schemas import Matmul, Matvec, Addvec, Dot
 
 app = FastAPI()
 trace = Trace()
 visualiser = Visualiser(trace)
+
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 def execute(op: str, payload1, payload2):
     try:
