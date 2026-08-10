@@ -1,11 +1,11 @@
 import pytest
-from optrace import Trace
+from engine import Trace, Validators as v
 
 @pytest.fixture
 def trace():
     return Trace()
 
-class Test_matmul:
+class TestMatmul:
     
     A1 = [[1, 4, 4],[1, 5, 6],[6, 2, 5],[5, 2, 5]] # 4x3
     A2 = [[5, 51, 1, 5, 6],[4, 6, 7, 8, 4],[4, 3, 7, 7, 7]] # 3x5
@@ -189,7 +189,7 @@ class Test_matmul:
         assert events == expected_events
 
 
-class Test_matvec:
+class TestMatvec:
 
     A1 = [[1, 2],[5, 5]]
     A2 = [[1, 4, 4],[1, 5, 6],[6, 2, 5],[5, 2, 5]]
@@ -320,7 +320,7 @@ class Test_matvec:
         assert expected_events == events
 
 
-class Test_addvec:
+class TestAddvec:
     A1 = [1, 3, 55, 1]
     A2 = [6.4, 3.2, 4]
     A3 = [4, 2, 1, 0, 4.5, 4.2]
@@ -435,7 +435,7 @@ class Test_addvec:
 
         assert events == expected_events
 
-class Test_dot:
+class TestDot:
     A1 = [3, 6, 1, 5]
     A2 = [1, 3.1, 3]
     A3 = [1, 5, 0, 9, 4, 4, 2]
@@ -545,53 +545,53 @@ class Test_dot:
         assert events == expected_events
         
 
-class Test_validators:
+class TestValidators:
 
-    def test_unequal_rows(self, trace):
+    def test_unequal_rows(self):
         with pytest.raises(ValueError):
-            trace.validate_matrix([[1, 2],[4, 5, 4],[4, 6, 2]])
+            v.validate_matrix([[1, 2],[4, 5, 4],[4, 6, 2]])
         with pytest.raises(ValueError):
-            trace.validate_matrix([[3, 3, 1],[1, 4],[4, 4]])
+            v.validate_matrix([[3, 3, 1],[1, 4],[4, 4]])
 
 
-    def test_invalid_elements(self, trace):
+    def test_invalid_elements(self):
         with pytest.raises(ValueError): 
-            trace.validate_matrix([[3, 2],[3, []]])
+            v.validate_matrix([[3, 2],[3, []]])
         with pytest.raises(ValueError):
-            trace.validate_matrix([[4, 1, 3],[3, 4, "1"]])
+            v.validate_matrix([[4, 1, 3],[3, 4, "1"]])
         with pytest.raises(ValueError):
-            trace.validate_matrix([[4, 9, True, 0],[0, 2, 4, 5]])
+            v.validate_matrix([[4, 9, True, 0],[0, 2, 4, 5]])
         with pytest.raises(ValueError):
-            trace.validate_matrix([3])
+            v.validate_matrix([3])
         with pytest.raises(ValueError):
-            trace.validate_matrix([[],[],[]])
+            v.validate_matrix([[],[],[]])
         with pytest.raises(ValueError):
-            trace.validate_matrix([])
+            v.validate_matrix([])
 
         with pytest.raises(ValueError):
-            trace.validate_vector([[1, 3],[3, 5]])
+            v.validate_vector([[1, 3],[3, 5]])
         with pytest.raises(ValueError):
-            trace.validate_vector([3, 4, [], 5])
+            v.validate_vector([3, 4, [], 5])
         with pytest.raises(ValueError):
-            trace.validate_vector([5, 1, "3"])
+            v.validate_vector([5, 1, "3"])
         with pytest.raises(ValueError):
-            trace.validate_vector([])
+            v.validate_vector([])
         with pytest.raises(ValueError):
-            trace.validate_vector([6, True, 9, 2])
+            v.validate_vector([6, True, 9, 2])
 
-    def test_valid_inputs(self, trace):
-        trace.validate_matrix([[3, 4, 1, 4],[41, 3, 11, 1],[3, 5, 2, 2]])
-        trace.validate_matrix([[1]])
-        trace.validate_matrix([[34, 42],[3, 1]])
-        trace.validate_matrix([[3.4, 1, 4.5, 5.25], [2, 0.4, 5, 2]])
+    def test_valid_inputs(self):
+        v.validate_matrix([[3, 4, 1, 4],[41, 3, 11, 1],[3, 5, 2, 2]])
+        v.validate_matrix([[1]])
+        v.validate_matrix([[34, 42],[3, 1]])
+        v.validate_matrix([[3.4, 1, 4.5, 5.25], [2, 0.4, 5, 2]])
 
-        trace.validate_vector([1, 3, 4, 3, 4])
-        trace.validate_vector([1])
-        trace.validate_vector([3, 4])
-        trace.validate_vector([4.144, 2.24, 0.1, 4])
+        v.validate_vector([1, 3, 4, 3, 4])
+        v.validate_vector([1])
+        v.validate_vector([3, 4])
+        v.validate_vector([4.144, 2.24, 0.1, 4])
 
 
-class Test_state:
+class TestState:
 
     def test_invalid_state(self, trace):
         assert trace.state == "inactive"

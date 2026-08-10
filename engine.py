@@ -54,8 +54,8 @@ class Trace:
         if self._B is None:
             raise RuntimeError
 
-        self.validate_matrix(self._A)
-        self.validate_matrix(self._B)
+        Validators.validate_matrix(self._A)
+        Validators.validate_matrix(self._B)
 
         A_rows = len(self._A)
         A_cols = len(self._A[0])
@@ -121,39 +121,7 @@ class Trace:
                 }
 
         self.state = "complete"
-
-    def validate_matrix(self, matrix):
-        # check matrix is a non-empty list
-        if not isinstance(matrix, list) or not matrix:
-            raise ValueError("empty matrix")
-        # check nested lists are not empty
-        if not isinstance(matrix[0], list) or not matrix[0]:
-            raise ValueError("empty matrix") 
-
-        row_size = len(matrix[0])
-
-        for row in matrix:
-            # check all rows are lists
-            if not isinstance(row, list):
-                raise ValueError("invalid list in matrix")
-            
-            # check all rows are the same length
-            if len(row) != row_size:
-                raise ValueError("rows must be the same size")
-            
-            for element in row:
-                # check all elements are integers or floats
-                if isinstance(element, bool) or not isinstance(element, (float, int)):
-                    raise ValueError("invalid value in matrix")
-
-    def validate_vector(self, vector):
-        if not isinstance(vector, list) or not vector:
-            raise ValueError("invalid vector input")
-        for element in vector:
-            if isinstance(element, bool) or not isinstance(element, (int, float)):
-                raise ValueError("invalid vector value")
-
-        
+     
 
     def matvec(self):
         if self._A is None:
@@ -162,8 +130,8 @@ class Trace:
             raise RuntimeError
 
 
-        self.validate_matrix(self._A)
-        self.validate_vector(self._B)
+        Validators.validate_matrix(self._A)
+        Validators.validate_vector(self._B)
 
         A_rows = len(self._A)
         A_cols = len(self._A[0])
@@ -223,8 +191,8 @@ class Trace:
         if self._B is None:
             raise RuntimeError
 
-        self.validate_vector(self._A)
-        self.validate_vector(self._B)
+        Validators.validate_vector(self._A)
+        Validators.validate_vector(self._B)
 
         A_len = len(self._A)
         B_len = len(self._B)
@@ -272,8 +240,8 @@ class Trace:
         if self._B is None:
             raise RuntimeError
 
-        self.validate_vector(self._A)
-        self.validate_vector(self._B)
+        Validators.validate_vector(self._A)
+        Validators.validate_vector(self._B)
 
         A_len = len(self._A)
         B_len = len(self._B)
@@ -381,8 +349,42 @@ class Trace:
 
 
 
-class Visualiser:
+class Validators:
+    @staticmethod
+    def validate_matrix(matrix):
+        # check matrix is a non-empty list
+        if not isinstance(matrix, list) or not matrix:
+            raise ValueError("empty matrix")
+        # check nested lists are not empty
+        if not isinstance(matrix[0], list) or not matrix[0]:
+            raise ValueError("empty matrix") 
 
+        row_size = len(matrix[0])
+
+        for row in matrix:
+            # check all rows are lists
+            if not isinstance(row, list):
+                raise ValueError("invalid list in matrix")
+            
+            # check all rows are the same length
+            if len(row) != row_size:
+                raise ValueError("rows must be the same size")
+            
+            for element in row:
+                # check all elements are integers or floats
+                if isinstance(element, bool) or not isinstance(element, (float, int)):
+                    raise ValueError("invalid value in matrix")
+
+    @staticmethod
+    def validate_vector(vector):
+        if not isinstance(vector, list) or not vector:
+            raise ValueError("invalid vector input")
+        for element in vector:
+            if isinstance(element, bool) or not isinstance(element, (int, float)):
+                raise ValueError("invalid vector value")
+
+
+class Visualiser:
     def __init__(self, engine):
         self._engine = engine
 
