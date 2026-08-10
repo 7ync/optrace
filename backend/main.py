@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from engine import Trace, Visualiser
-from schemas import Matmul, Matvec, Addvec, Dot
+from backend.engine import Trace, Visualiser
+from backend.schemas import Matmul, Matvec, Addvec, Dot
 
 app = FastAPI()
 trace = Trace()
