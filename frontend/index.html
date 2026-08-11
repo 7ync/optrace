@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Operation Visualiser</title>
+    <link rel="stylesheet" href="style.css?v=20260810-10">
+  </head>
+  <body>
+    <main class="app">
+      <section class="controls" aria-label="Calculation setup">
+        <div class="field op-field" id="opField">
+          <select id="opSelect" autocomplete="off" aria-label="Operation">
+            <option value="">Select operation</option>
+            <option value="matmul">matrix multiplication</option>
+            <option value="matvec">matrix vector</option>
+            <option value="addvec">add vectors</option>
+            <option value="dot">dot product</option>
+          </select>
+          <label class="toggle">
+            <input id="visualiseToggle" type="checkbox" checked>
+            <span>step by step</span>
+          </label>
+          <button id="calculateBtn" class="primary-btn" type="button" disabled>Calculate</button>
+        </div>
+
+        <div class="field operand-field inactive" id="aField">
+          <div class="operand-head">
+            <label id="aLabel">A</label>
+            <span id="aShape" class="shape-text"></span>
+          </div>
+          <div id="aEditor" class="operand-editor" aria-labelledby="aLabel"></div>
+        </div>
+
+        <div class="field operand-field inactive" id="bField">
+          <div class="operand-head">
+            <label id="bLabel">B</label>
+            <span id="bShape" class="shape-text"></span>
+          </div>
+          <div id="bEditor" class="operand-editor" aria-labelledby="bLabel"></div>
+        </div>
+      </section>
+
+      <p id="message" class="message" role="status" aria-live="polite"></p>
+
+      <section id="workspace" class="workspace empty" aria-live="polite">
+        <div class="empty-state">
+          <p>Select an operation and enter A and B to initialise a calculation.</p>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js?v=20260811-1"></script>
+  </body>
+</html>
