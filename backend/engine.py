@@ -390,35 +390,7 @@ class Visualiser:
 
     def get_events(self, A, B, op):
         self._op = op
-        # TODO check_size(A)
-        # TODO check_size(B)
 
         events = list(self._engine.calculate(A, B, op))
 
         return events
-        
-
-
-def main():
-    A = [[3,1,4,5,6],[4,46,7,8,6],[3,7,84,4,3]] # 3x5
-    B = [[1,3,3,2],[3,6,2,27],[3,1,14,8],[0,3,31,7],[11,3,13,4]] # 5x4
-    #A = [1,3,1,4,1]
-    #B = [1,3,5,6,4]
-    #B = [[1]]
-    #A = [[2]]
-    #B = [[4]]
-
-    #A = [1,3,4]
-    #B = [2,4,5]
-
-    
-
-
-    trace = Trace()
-    for step in trace.calculate(A, B, "matmul"):
-        print(list(step))
-        pass
-    trace.report()
-
-if __name__ == "__main__":
-    main()
