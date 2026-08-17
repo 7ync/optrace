@@ -37,7 +37,7 @@ class TestMatmul:
                              [22, 53, 71, 65, 42, 48, 73], 
                              [17, 54, 72, 70, 47, 49, 53], 
                              [16, 50, 67, 64, 43, 46, 52]]
-        assert cost == {"muls": 84, "adds": 56, "reads": 168, "writes": 28}
+        assert cost == {"muls": 84, "adds": 56, "scalars_indexed": 168, "writes": 28}
         
 
         for _ in trace.calculate(self.A2, self.B2, "matmul"): pass
@@ -45,21 +45,21 @@ class TestMatmul:
         assert len(trace.C()[0]) == 2 # type: ignore
         assert trace.C() == [[107, 386], [124, 91], [112, 71]]
         cost = trace.get_expected_cost()
-        assert cost == {"muls": 30, "adds": 24, "reads": 60, "writes": 6}
+        assert cost == {"muls": 30, "adds": 24, "scalars_indexed": 60, "writes": 6}
 
         for _ in trace.calculate(self.A3, self.B3, "matmul"): pass
         assert len(trace.C()) == 2 # type: ignore
         assert len(trace.C()[0]) == 2 # type: ignore
         assert trace.C() == [[8, 18], [30, 50]]
         cost = trace.get_expected_cost()
-        assert cost == {"muls": 8, "adds": 4, "reads": 16, "writes": 4}
+        assert cost == {"muls": 8, "adds": 4, "scalars_indexed": 16, "writes": 4}
 
         for _ in trace.calculate(self.A4, self.B4, "matmul"): pass
         assert len(trace.C()) == 1 # type: ignore
         assert len(trace.C()[0]) == 1 # type: ignore
         assert trace.C() == [[8]]
         cost = trace.get_expected_cost()
-        assert cost == {"muls": 1, "adds": 0, "reads": 2, "writes": 1}
+        assert cost == {"muls": 1, "adds": 0, "scalars_indexed": 2, "writes": 1}
 
     def test_yield_data(self, trace):
         events = list(trace.calculate(self.A1, self.B1, "matmul"))
@@ -84,7 +84,7 @@ class TestMatmul:
 
         expected_compute_1 = {
             "event": "compute", 
-            "muls": 1, "adds": 0, "reads": 2, "flops": 1, 
+            "muls": 1, "adds": 0, "scalars_indexed": 2, 
             "i": 0, "j": 0, "k": 0
         }
 
@@ -102,8 +102,7 @@ class TestMatmul:
             "event": "compute",
             "muls": m*n*p,
             "adds": m*p*(n-1),
-            "reads": 2*m*n*p,
-            "flops": (m*p*(n-1)) + (m*n*p),
+            "scalars_indexed": 2*m*n*p,
             "i": m - 1,
             "j": p - 1,
             "k": n - 1,
@@ -126,12 +125,12 @@ class TestMatmul:
             },
             {
                 "event": "compute",
-                "muls": 1, "adds": 0, "reads": 2, "flops": 1, 
+                "muls": 1, "adds": 0, "scalars_indexed": 2, 
                 "i": 0, "j": 0, "k": 0
             },
             {
                 "event": "compute", 
-                "muls": 2, "adds": 1, "reads": 4, "flops": 3, 
+                "muls": 2, "adds": 1, "scalars_indexed": 4, 
                 "i": 0, "j": 0, "k": 1
             },
             {
@@ -141,12 +140,12 @@ class TestMatmul:
             },
             {
                 "event": "compute", 
-                "muls": 3, "adds": 1, "reads": 6, "flops": 4, 
+                "muls": 3, "adds": 1, "scalars_indexed": 6, 
                 "i": 0, "j": 1, "k": 0
             },
             {
                 "event": "compute", 
-                "muls": 4, "adds": 2, "reads": 8, "flops": 6, 
+                "muls": 4, "adds": 2, "scalars_indexed": 8, 
                 "i": 0, "j": 1, "k": 1
             },
             {
@@ -156,12 +155,12 @@ class TestMatmul:
             },
             {
                 "event": "compute", 
-                "muls": 5, "adds": 2, "reads": 10, "flops": 7, 
+                "muls": 5, "adds": 2, "scalars_indexed": 10, 
                 "i": 1, "j": 0, "k": 0
             },
             {
                 "event": "compute", 
-                "muls": 6, "adds": 3, "reads": 12, "flops": 9, 
+                "muls": 6, "adds": 3, "scalars_indexed": 12, 
                 "i": 1, "j": 0, "k": 1
             },
             {
@@ -171,12 +170,12 @@ class TestMatmul:
             },
             {
                 "event": "compute", 
-                "muls": 7, "adds": 3, "reads": 14, "flops": 10, 
+                "muls": 7, "adds": 3, "scalars_indexed": 14, 
                 "i": 1, "j": 1, "k": 0
             },
             {
                 "event": "compute", 
-                "muls": 8, "adds": 4, "reads": 16, "flops": 12, 
+                "muls": 8, "adds": 4, "scalars_indexed": 16, 
                 "i": 1, "j": 1, "k": 1
             },
             {
@@ -215,20 +214,20 @@ class TestMatvec:
         cost = trace.get_expected_cost()
         assert len(trace.C()) == 2 # type: ignore
         assert trace.C() == [14, 45]
-        assert cost == {"muls": 4, "adds": 2, "reads": 8, "writes": 2}
+        assert cost == {"muls": 4, "adds": 2, "scalars_indexed": 8, "writes": 2}
 
         assert len(self.A2[0]) == len(self.B1)
         for _ in trace.calculate(self.A2, self.B1, "matvec"): pass
         cost = trace.get_expected_cost()
         assert len(trace.C()) == 4 # type: ignore
         assert trace.C() == [14, 18, 21, 19]
-        assert cost == {"muls": 12, "adds": 8, "reads": 24, "writes": 4}
+        assert cost == {"muls": 12, "adds": 8, "scalars_indexed": 24, "writes": 4}
 
         assert len(self.A3[0]) == len(self.B3)
         for _ in trace.calculate(self.A3, self.B3, "matvec"): pass
         cost = trace.get_expected_cost()
         assert len(trace.C()) == 1 # type: ignore
-        assert cost == {"muls": 4, "adds": 3, "reads": 8, "writes": 1}
+        assert cost == {"muls": 4, "adds": 3, "scalars_indexed": 8, "writes": 1}
 
     def test_yield_data(self, trace):
         events = list(trace.calculate(self.A2, self.B1, "matvec"))
@@ -252,7 +251,7 @@ class TestMatvec:
 
         expected_compute_1 = {
             "event": "compute",
-            "muls": 1, "adds": 0, "reads": 2, "flops": 1,
+            "muls": 1, "adds": 0, "scalars_indexed": 2,
             "A_row": 0, "A_col": 0, "B_element": 0,
         }
 
@@ -268,7 +267,7 @@ class TestMatvec:
 
         expected_compute_final = {
             "event": "compute",
-            "muls": m*p, "adds": m*(p-1), "reads": 2*m*p, "flops": (m*p) + m*(p-1),
+            "muls": m*p, "adds": m*(p-1), "scalars_indexed": 2*m*p,
             "A_row": m-1, "A_col": p-1, "B_element": p-1
         }
 
@@ -287,12 +286,12 @@ class TestMatvec:
             },
             {
                 "event": "compute",
-                "muls": 1, "adds": 0, "reads": 2, "flops": 1,
+                "muls": 1, "adds": 0, "scalars_indexed": 2,
                 "A_row": 0, "A_col": 0, "B_element": 0,
             },
             {
                 "event": "compute",
-                "muls": 2, "adds": 1, "reads": 4, "flops": 3,
+                "muls": 2, "adds": 1, "scalars_indexed": 4,
                 "A_row": 0, "A_col": 1, "B_element": 1,
             },
             {
@@ -302,12 +301,12 @@ class TestMatvec:
             },
             {
                 "event": "compute",
-                "muls": 3, "adds": 1, "reads": 6, "flops": 4,
+                "muls": 3, "adds": 1, "scalars_indexed": 6,
                 "A_row": 1, "A_col": 0, "B_element": 0,
             },
             {
                 "event": "compute",
-                "muls": 4, "adds": 2, "reads": 8, "flops": 6,
+                "muls": 4, "adds": 2, "scalars_indexed": 8,
                 "A_row": 1, "A_col": 1, "B_element": 1
             },
             {
@@ -344,14 +343,14 @@ class TestAddvec:
         cost = trace.get_expected_cost()
         assert len(trace.C()) == 4 # type: ignore
         assert trace.C() == pytest.approx([6, 55, 56, 7])
-        assert cost == {"muls": 0, "adds": 4, "reads": 8, "writes": 4}
+        assert cost == {"muls": 0, "adds": 4, "scalars_indexed": 8, "writes": 4}
 
         assert len(self.A2) == len(self.B2)
         for _ in trace.calculate(self.A2, self.B2, "addvec"): pass
         cost = trace.get_expected_cost()
         assert len(trace.C()) == 3 # type: ignore
         assert trace.C() == pytest.approx([8.4, 6.2, 9])
-        assert cost == {"muls": 0, "adds": 3, "reads": 6, "writes": 3}
+        assert cost == {"muls": 0, "adds": 3, "scalars_indexed": 6, "writes": 3}
 
     def test_yield_data(self, trace):
         events = list(trace.calculate(self.A3, self.B3, "addvec"))
@@ -376,7 +375,7 @@ class TestAddvec:
             "A_index": 0,
             "B_index": 0,
             "adds": 1,
-            "reads": 2,
+            "scalars_indexed": 2,
         }
 
         assert events[1] == expected_compute_1
@@ -394,7 +393,7 @@ class TestAddvec:
             "A_index": m-1,
             "B_index": p-1,
             "adds": m,
-            "reads": 2*m,
+            "scalars_indexed": 2*m,
 
         }
 
@@ -414,7 +413,7 @@ class TestAddvec:
             {
                 "event": "compute",
                 "A_index": 0, "B_index": 0,
-                "adds": 1, "reads": 2
+                "adds": 1, "scalars_indexed": 2
             },
             {
                 "event": "write",
@@ -424,7 +423,7 @@ class TestAddvec:
             {
                 "event": "compute",
                 "A_index": 1, "B_index": 1,
-                "adds": 2, "reads": 4
+                "adds": 2, "scalars_indexed": 4
             },
             {
                 "event": "write",
@@ -460,14 +459,14 @@ class TestDot:
         cost = trace.get_expected_cost()
         assert len([trace.C()]) == 1 # type: ignore
         assert trace.C() == 84
-        assert cost == {"muls": 4, "adds": 3, "reads": 8, "writes": 1}
+        assert cost == {"muls": 4, "adds": 3, "scalars_indexed": 8, "writes": 1}
 
         assert len(self.A2) == len(self.B2)
         for _ in trace.calculate(self.A2, self.B2, "dot"): pass
         cost = trace.get_expected_cost()
         assert isinstance(trace.C(), (int, float))
         assert trace.C() == 16
-        assert cost == {"muls": 3, "adds": 2, "reads": 6, "writes": 1}
+        assert cost == {"muls": 3, "adds": 2, "scalars_indexed": 6, "writes": 1}
 
     def test_yield_data(self, trace):
         events = list(trace.calculate(self.A3, self.B3, "dot"))
@@ -492,7 +491,7 @@ class TestDot:
             "index": 0,
             "muls": 1,
             "adds": 0,
-            "reads": 2,
+            "scalars_indexed": 2,
         }
 
         assert events[1] == expected_compute_1
@@ -502,7 +501,7 @@ class TestDot:
             "index": m-1,
             "muls": m,
             "adds": p-1,
-            "reads": 2*m,
+            "scalars_indexed": 2*m,
 
         }
 
@@ -529,12 +528,12 @@ class TestDot:
             {
                 "event": "compute",
                 "index": 0, "muls": 1,
-                "adds": 0, "reads": 2,
+                "adds": 0, "scalars_indexed": 2,
             },
             {
                 "event": "compute",
                 "index": 1, "muls": 2,
-                "adds": 1, "reads": 4,
+                "adds": 1, "scalars_indexed": 4,
             },
             {
                 "event": "write",

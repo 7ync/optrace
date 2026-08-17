@@ -1,6 +1,7 @@
 """
-In-progress pure Python operation tracer for specific foundational matrix and vector calculations. 
-Currently implements matrix multiplication with step events and simplified logical counts for arithmetic operations, operand reads, and output writes.
+Pure Python mathematical engine for matrix multiplication, matrix-vector multiplication, vector addition and dot product calculations. 
+Emits step events as it calculates, each carrying running counts of multiplications, additions, scalars indexed and output writes. 
+The counts are a deliberately simple logical model and describe the operations performed in this implementation, not their cost at runtime.
 """
 
 class Trace:
@@ -31,7 +32,7 @@ class Trace:
 
         self.muls = 0
         self.adds = 0
-        self.reads = 0
+        self.scalars_indexed = 0
         self.writes = 0
 
         self.state = "in_progress"
@@ -97,14 +98,13 @@ class Trace:
                         result += self._A[i][k] * self._B[k][j]
                         self.adds += 1
                     self.muls += 1
-                    self.reads += 2
+                    self.scalars_indexed += 2
                     
                     yield {
                         "event":"compute", 
                         "muls": self.muls,
                         "adds": self.adds, 
-                        "reads": self.reads,
-                        "flops": (self.muls + self.adds),
+                        "scalars_indexed": self.scalars_indexed,
                         "i": i,
                         "j": j,
                         "k": k
@@ -160,14 +160,13 @@ class Trace:
                     result += A_element * B_element
                     self.adds += 1
                 self.muls += 1
-                self.reads += 2
+                self.scalars_indexed += 2
 
                 yield {
                     "event": "compute",
                     "muls": self.muls,
                     "adds": self.adds,
-                    "reads": self.reads,
-                    "flops": self.muls + self.adds,
+                    "scalars_indexed": self.scalars_indexed,
                     "A_row": i,
                     "A_col": col,
                     "B_element": col,
@@ -212,14 +211,14 @@ class Trace:
         for i, (a, b) in enumerate(zip(self._A, self._B)):
             result = a + b
             self.adds += 1
-            self.reads += 2
+            self.scalars_indexed += 2
 
             yield {
                 "event": "compute",
                 "A_index": i,
                 "B_index": i,
                 "adds": self.adds,
-                "reads": self.reads,
+                "scalars_indexed": self.scalars_indexed,
             }
 
             self._C.append(result)
@@ -267,14 +266,14 @@ class Trace:
                 self.adds += 1
 
             self.muls += 1
-            self.reads += 2
+            self.scalars_indexed += 2
 
             yield {
                 "event": "compute",
                 "index": i,
                 "muls": self.muls,
                 "adds": self.adds,
-                "reads": self.reads,
+                "scalars_indexed": self.scalars_indexed,
             }
 
         self._C = accumulator
@@ -292,7 +291,7 @@ class Trace:
             raise RuntimeError
 
         formula_count = self.get_expected_cost()
-        engine_count = {"muls": self.muls, "adds": self.adds, "reads": self.reads, "writes": self.writes}
+        engine_count = {"muls": self.muls, "adds": self.adds, "scalars_indexed": self.scalars_indexed, "writes": self.writes}
 
         if formula_count != engine_count:
            raise RuntimeError
@@ -302,7 +301,7 @@ class Trace:
             Result: {self._C}
             Multiplications: {engine_count["muls"]}
             Additions: {engine_count["adds"]}
-            Operand Reads: {engine_count["reads"]}
+            Scalars Indexed: {engine_count["scalars_indexed"]}
             Output Writes: {engine_count["writes"]}
         """
 
@@ -322,17 +321,17 @@ class Trace:
                 m = len(self._A)
                 n = len(self._A[0])
                 p = len(self._B[0])
-                return {"muls": m*n*p, "adds": m*p*(n-1), "reads":2*m*n*p, "writes": m*p}
+                return {"muls": m*n*p, "adds": m*p*(n-1), "scalars_indexed":2*m*n*p, "writes": m*p}
             case "matvec":
                 m = len(self._A)
                 n = len(self._B)
-                return {"muls": m*n, "adds": m*(n-1),"reads": 2*(m*n), "writes": m}
+                return {"muls": m*n, "adds": m*(n-1),"scalars_indexed": 2*(m*n), "writes": m}
             case "addvec":
                 n = len(self._A)
-                return {"muls": 0, "adds": n, "reads": 2*n, "writes": n}
+                return {"muls": 0, "adds": n, "scalars_indexed": 2*n, "writes": n}
             case "dot":
                 n = len(self._A)
-                return {"muls": n, "adds": n-1, "reads": 2*n, "writes": 1}
+                return {"muls": n, "adds": n-1, "scalars_indexed": 2*n, "writes": 1}
 
 
 

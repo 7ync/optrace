@@ -14,8 +14,8 @@
   --accent-line: #46aeca;
   --warn: #a64d12;
   --warn-soft: #ffe3cf;
-  --read: #006ca8;
-  --read-soft: #d7eefc;
+  --indexed: #006ca8;
+  --indexed-soft: #d7eefc;
   --write: #9c3d77;
   --write-soft: #f7d9eb;
   --shadow: 0 12px 30px rgba(23, 36, 44, 0.13);
@@ -356,9 +356,9 @@ select {
   font-weight: 600;
 }
 
-.viz-cell.read {
-  border-color: var(--read);
-  background: var(--read-soft);
+.viz-cell.indexed {
+  border-color: var(--indexed);
+  background: var(--indexed-soft);
   transform: translateY(-1px);
 }
 

@@ -319,16 +319,16 @@ function cellKey(prefix, row, col = 0) {
 }
 
 function highlightsFor(event, op) {
-  const reads = new Set();
+  const indexed = new Set();
   const writes = new Set();
   const targets = new Set();
 
-  if (!event) return { reads, writes, targets };
+  if (!event) return { indexed, writes, targets };
 
   if (op === "matmul") {
     if (event.event === "compute") {
-      reads.add(cellKey("A", event.i, event.k));
-      reads.add(cellKey("B", event.k, event.j));
+      indexed.add(cellKey("A", event.i, event.k));
+      indexed.add(cellKey("B", event.k, event.j));
       targets.add(cellKey("C", event.i, event.j));
     }
     if (event.event === "write") writes.add(cellKey("C", event.i, event.j));
@@ -336,8 +336,8 @@ function highlightsFor(event, op) {
 
   if (op === "matvec") {
     if (event.event === "compute") {
-      reads.add(cellKey("A", event.A_row, event.A_col));
-      reads.add(cellKey("B", 0, event.B_element));
+      indexed.add(cellKey("A", event.A_row, event.A_col));
+      indexed.add(cellKey("B", 0, event.B_element));
       targets.add(cellKey("C", 0, event.A_row));
     }
     if (event.event === "write") writes.add(cellKey("C", 0, event.C_element));
@@ -345,8 +345,8 @@ function highlightsFor(event, op) {
 
   if (op === "addvec") {
     if (event.event === "compute") {
-      reads.add(cellKey("A", 0, event.A_index));
-      reads.add(cellKey("B", 0, event.B_index));
+      indexed.add(cellKey("A", 0, event.A_index));
+      indexed.add(cellKey("B", 0, event.B_index));
       targets.add(cellKey("C", 0, event.A_index));
     }
     if (event.event === "write") writes.add(cellKey("C", 0, event.C_index));
@@ -354,14 +354,14 @@ function highlightsFor(event, op) {
 
   if (op === "dot") {
     if (event.event === "compute") {
-      reads.add(cellKey("A", 0, event.index));
-      reads.add(cellKey("B", 0, event.index));
+      indexed.add(cellKey("A", 0, event.index));
+      indexed.add(cellKey("B", 0, event.index));
       targets.add(cellKey("C", 0, 0));
     }
     if (event.event === "write") writes.add(cellKey("C", 0, 0));
   }
 
-  return { reads, writes, targets };
+  return { indexed, writes, targets };
 }
 
 function formatValue(value) {
@@ -381,7 +381,7 @@ function renderVizGrid(label, value, kind, prefix, marks, writtenKeys = new Set(
           const keyCol = isVector(kind) ? rowIndex : colIndex;
           const key = cellKey(prefix, keyRow, keyCol);
           const classes = ["viz-cell"];
-          if (marks.reads.has(key)) classes.push("read");
+          if (marks.indexed.has(key)) classes.push("indexed");
           if (marks.writes.has(key)) classes.push("write");
           if (marks.targets.has(key)) classes.push("target");
           if (prefix === "C" && !writtenKeys.has(key)) classes.push("pending");
@@ -422,10 +422,10 @@ function eventDescription(event, op) {
     if (op === "addvec") return `Writing the calculated value to C[${event.C_index}].`;
     return "Writing the calculated value to C[0].";
   }
-  if (op === "matmul") return `Reading elements A[${event.i}, ${event.k}] and B[${event.k}, ${event.j}] to calculate C[${event.i}, ${event.j}].`;
-  if (op === "matvec") return `Reading elements A[${event.A_row}, ${event.A_col}] and B[${event.B_element}] to calculate C[${event.A_row}].`;
-  if (op === "addvec") return `Reading elements A[${event.A_index}] and B[${event.B_index}] to calculate C[${event.A_index}].`;
-  return `Reading elements A[${event.index}] and B[${event.index}] to calculate C[0].`;
+  if (op === "matmul") return `Indexing scalars A[${event.i}, ${event.k}] and B[${event.k}, ${event.j}] to calculate C[${event.i}, ${event.j}].`;
+  if (op === "matvec") return `Indexing scalars A[${event.A_row}, ${event.A_col}] and B[${event.B_element}] to calculate C[${event.A_row}].`;
+  if (op === "addvec") return `Indexing scalars A[${event.A_index}] and B[${event.B_index}] to calculate C[${event.A_index}].`;
+  return `Indexing scalars A[${event.index}] and B[${event.index}] to calculate C[0].`;
 }
 
 function tallyCounters(events) {
@@ -433,11 +433,10 @@ function tallyCounters(events) {
     (totals, event) => ({
       muls: Math.max(totals.muls, event.muls ?? 0),
       adds: Math.max(totals.adds, event.adds ?? 0),
-      reads: Math.max(totals.reads, event.reads ?? 0),
+      scalarsIndexed: Math.max(totals.scalarsIndexed, event.scalars_indexed ?? 0),
       writes: Math.max(totals.writes, event.writes ?? 0),
-      flops: Math.max(totals.flops, event.flops ?? (event.muls ?? 0) + (event.adds ?? 0)),
     }),
-    { muls: 0, adds: 0, reads: 0, writes: 0, flops: 0 },
+    { muls: 0, adds: 0, scalarsIndexed: 0, writes: 0 },
   );
 }
 
@@ -449,9 +448,8 @@ function renderReport(events, complete) {
       <div class="report-list">
         <div class="report-row"><span>Multiplications</span><strong>${totals.muls}</strong></div>
         <div class="report-row"><span>Additions</span><strong>${totals.adds}</strong></div>
-        <div class="report-row"><span>Operand reads</span><strong>${totals.reads}</strong></div>
+        <div class="report-row"><span>Scalars indexed</span><strong>${totals.scalarsIndexed}</strong></div>
         <div class="report-row"><span>Output writes</span><strong>${totals.writes}</strong></div>
-        <div class="report-row"><span>Flops</span><strong>${totals.flops}</strong></div>
       </div>
     </section>
   `;
