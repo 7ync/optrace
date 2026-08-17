@@ -4,8 +4,6 @@ from backend.engine import Trace, Visualiser
 from backend.schemas import Matmul, Matvec, Addvec, Dot
 
 app = FastAPI()
-trace = Trace()
-visualiser = Visualiser(trace)
 
 origins = [
     "http://localhost:3000",
@@ -22,6 +20,7 @@ app.add_middleware(
 
 
 def execute(op: str, payload1, payload2):
+    visualiser = Visualiser(Trace())
     try:
         events = list(visualiser.get_events(payload1, payload2, op))
         return {"status": "success", "events": events}
