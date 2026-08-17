@@ -150,14 +150,13 @@ class Trace:
             "C_elements": A_rows,
         }
 
-        for i, row in enumerate(self._A):
-            matvec_iterator = zip(row, self._B)
+        for i in range(len(self._A)):
             result = 0
-            for col, (A_element, B_element) in enumerate(matvec_iterator):
-                if col == 0:
-                    result = A_element * B_element
+            for k in range(len(self._B)):
+                if k == 0:
+                    result = self._A[i][k] * self._B[k]
                 else:
-                    result += A_element * B_element
+                    result += self._A[i][k] * self._B[k]
                     self.adds += 1
                 self.muls += 1
                 self.scalars_indexed += 2
@@ -168,8 +167,8 @@ class Trace:
                     "adds": self.adds,
                     "scalars_indexed": self.scalars_indexed,
                     "A_row": i,
-                    "A_col": col,
-                    "B_element": col,
+                    "A_col": k,
+                    "B_element": k,
                 }
 
             self._C.append(result)
@@ -208,8 +207,8 @@ class Trace:
             "C_len": A_len,
         }
 
-        for i, (a, b) in enumerate(zip(self._A, self._B)):
-            result = a + b
+        for i in range(len(self._A)):
+            result = self._A[i] + self._B[i]
             self.adds += 1
             self.scalars_indexed += 2
 
@@ -258,11 +257,11 @@ class Trace:
 
         accumulator = 0
 
-        for i, (a, b) in enumerate(zip(self._A, self._B)):
+        for i in range(len(self._A)):
             if i == 0:
-                accumulator = a * b
+                accumulator = self._A[i] * self._B[i]
             else:
-                accumulator += a * b
+                accumulator += self._A[i] * self._B[i]
                 self.adds += 1
 
             self.muls += 1
