@@ -4,7 +4,7 @@ A Python engine for matrix multiplication, matrix-vector multiplication, vector 
 
 A FastAPI backend exposes the engine over HTTP, and a plain HTML/JS frontend replays the trace as a step-through visualisation.
 
-I wrote about what I learned building it here: baileyward.ai/demo
+[Try the live demo](https://baileyward.ai/demo/) or [read about what I learned building it](https://baileyward.ai/optrace.html).
 
 ## Running it
 
