@@ -21,7 +21,7 @@ uvicorn backend.main:app --reload
 
 The API listens on `http://localhost:8000`.
 
-Frontend (plain HTML/CSS/JS). The backend's CORS config allows `http://localhost:3000` and `http://127.0.0.1:3000` for local development, so serve `frontend/` on port 3000:
+Frontend:
 
 ```bash
 cd frontend
@@ -29,6 +29,8 @@ python3 -m http.server 3000
 ```
 
 Then open `http://localhost:3000`.
+
+The backend's CORS config allows `http://localhost:3000` and `http://127.0.0.1:3000` for local development.
 
 Tests (from the repository root):
 
@@ -38,7 +40,7 @@ pytest
 
 ## Using the engine
 
-`Trace.calculate(A, B, op)` is a generator. Exhaust it to run the calculation, then read the result and the counts:
+`Trace.calculate(A, B, op)` is a generator. Exhaust it to run the calculation, then read the result and print the report:
 
 ```python
 from backend.engine import Trace
@@ -48,11 +50,10 @@ for event in trace.calculate([[1, 2], [3, 4]], [[5, 6], [7, 8]], "matmul"):
     ...
 
 trace.C()                   # [[19, 22], [43, 50]]
-trace.get_expected_cost()   # {"muls": 8, "adds": 4, "scalars_indexed": 16, "writes": 4}
 trace.report()              # prints the result and counts
 ```
 
-A `Trace` moves through three states: `inactive`, `in_progress` and `complete`. It refuses to start a second calculation while one is in progress, refuses to hand back a result before one has finished, and resets itself if a generator is abandoned partway through.
+A `Trace` moves through three states. It starts `inactive`, holding no operands or result. Only `calculate()` can be called. While a generator is being consumed it is `in_progress`. A second calculation cannot be started, and an error or an abandoned generator resets it to `inactive`. Once the generator is exhausted it is `complete`, and `C()` and `report()` become available.
 
 To use the engine on its own without either server running:
 
@@ -60,7 +61,7 @@ To use the engine on its own without either server running:
 python -m backend.run
 ```
 
-It runs a 12×12 matrix multiplication and prints the report. You can change the inputs to use any operation or matrix/vector pair.
+It runs a 12×12 matrix multiplication and prints the report. You can change the inputs to use any valid operation or matrix/vector pair.
 
 ## What it counts
 
@@ -71,20 +72,24 @@ It runs a 12×12 matrix multiplication and prints the report. You can change the
 - `scalars_indexed` — scalars indexed from the operands
 - `writes` — values written to the output
 
-For matrix multiplication of an m×n matrix by an n×p matrix, `Trace.get_expected_cost()` gives:
+For matrix multiplication of an m×n matrix by an n×p matrix:
 
 - muls = m·n·p
 - adds = m·p·(n−1)
 - scalars_indexed = 2·m·n·p
 - writes = m·p
 
-`Trace.report()` recomputes these formulas independently and compares them against the counters accumulated during the run, raising if they disagree. This check runs on demand when `report()` is called, not automatically after every calculation.
+`Trace.report()` compares these formulas, derived by `Trace.get_expected_cost()`, against the counters accumulated during the run. A RuntimeError is raised if they disagree. This check runs on demand when `report()` is called.
 
-This is a logical operation count for the specific triple-loop implementation, not a runtime cost model. It says nothing about memory or how the operation would cost out on real hardware.
+This is a logical operation count for the specific triple-loop implementation. It says nothing about runtime, memory, or how the operation actually behaves on hardware.
 
 ## Events
 
-`calculate()` yields dicts with an `"event"` key: `"init"` once at the start with the shapes, `"compute"` after each scalar multiply/add, and `"write"` after each value is committed to the output. Compute events carry `muls`/`adds`/`scalars_indexed`; write events carry `writes`.
+`calculate()` yields dicts with an `"event"` key. There is one `"init"` at the start carrying the shapes, a `"compute"` after each scalar multiply/add, and a `"write"` after each value is committed to the output.
+
+Compute events carry `muls`/`adds`/`scalars_indexed`, and write events carry `writes`.
+
+A `Visualiser` class takes an engine and collects its events into a list. Nothing in the engine knows about it, so another consumer could handle the same events differently.
 
 Example sequence for a 2×2 matmul (from backend/tests/test_engine.py):
 
@@ -111,7 +116,7 @@ curl -X POST http://localhost:8000/matmul \
 {"status": "success", "events": [...]}
 ```
 
-Invalid input returns `{"status": "fail", "reason": "..."}` rather than an error status code.
+Invalid input returns `{"status": "fail", "reason": "..."}`.
 
 Operands are capped at 6×6 for matrices and 6 elements for vectors (backend/schemas.py). The engine itself has no limit. The cap exists for the frontend, and calling `Trace.calculate()` directly bypasses it.
 
