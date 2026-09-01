@@ -4,8 +4,6 @@ A Python engine for matrix multiplication, matrix-vector multiplication, vector 
 
 A FastAPI backend exposes the engine over HTTP, and a plain HTML/JS frontend replays the trace as a step-through visualisation.
 
-[Try the live demo](https://baileyward.ai/demo/) or [read about what I learned building it](https://baileyward.ai/optrace.html).
-
 ## Running it
 
 Backend:
@@ -40,8 +38,7 @@ pytest
 
 ## Using the engine
 
-`Trace.calculate(A, B, op)` is a generator. Exhaust it to run the calculation, then read the result and print the report:
-
+`Trace.calculate(A, B, op)` is a generator. Exhaust it to run the calculation
 ```python
 from backend.engine import Trace
 
@@ -53,15 +50,11 @@ trace.C()                   # [[19, 22], [43, 50]]
 trace.report()              # prints the result and counts
 ```
 
-A `Trace` moves through three states. It starts `inactive`, holding no operands or result. Only `calculate()` can be called. While a generator is being consumed it is `in_progress`. A second calculation cannot be started, and an error or an abandoned generator resets it to `inactive`. Once the generator is exhausted it is `complete`, and `C()` and `report()` become available.
-
 To use the engine on its own without either server running:
 
 ```bash
 python -m backend.run
 ```
-
-It runs a 12×12 matrix multiplication and prints the report. You can change the inputs to use any valid operation or matrix/vector pair.
 
 ## What it counts
 
@@ -71,17 +64,6 @@ It runs a 12×12 matrix multiplication and prints the report. You can change the
 - `adds` — scalar additions performed
 - `scalars_indexed` — scalars indexed from the operands
 - `writes` — values written to the output
-
-For matrix multiplication of an m×n matrix by an n×p matrix:
-
-- muls = m·n·p
-- adds = m·p·(n−1)
-- scalars_indexed = 2·m·n·p
-- writes = m·p
-
-`Trace.report()` compares these formulas, derived by `Trace.get_expected_cost()`, against the counters accumulated during the run. A RuntimeError is raised if they disagree. This check runs on demand when `report()` is called.
-
-This is a logical operation count for the specific triple-loop implementation. It says nothing about runtime, memory, or how the operation actually behaves on hardware.
 
 ## Events
 
